@@ -164,6 +164,10 @@ class PilotBladeStudy : public edm::EDAnalyzer
     int run;
     int ls;
     int evt;
+
+    int nclu[4]; // [0: fpix, i: layer i]
+    int npix[4]; // [0: fpix, i: layer i]
+    
     float intlumi;
     float instlumi;
     int ntracks;
@@ -179,6 +183,9 @@ class PilotBladeStudy : public edm::EDAnalyzer
       run=NOVAL_I;
       ls=NOVAL_I;
       evt=NOVAL_I;
+      
+      for (size_t i=0; i<4; i++) nclu[i]=npix[i]=NOVAL_I;
+      
       intlumi=NOVAL_F;
       instlumi=NOVAL_F;
       ntracks=NOVAL_I;
@@ -186,7 +193,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
       for (size_t i=0; i<16; i++) federrs[i][0]=federrs[i][1]=NOVAL_I;
 
       
-      list="fill/I:run/I:ls/I:evt/I:intlumi/F:instlumi/F:ntracks/I:federrs_size/I:"
+      list="fill/I:run/I:ls/I:evt/I:nclu[4]/I:npix[4]/I:intlumi/F:instlumi/F:ntracks/I:federrs_size/I:"
       "federrs[federrs_size][2]";
     }
   } evt_;
@@ -223,6 +230,9 @@ class PilotBladeStudy : public edm::EDAnalyzer
     // Paired branches (SPLIT mode)
     float x;
     float y;
+    float glx;
+    float gly;
+    float glz;
     int sizeX;
     int sizeY;
     // From here Split mode (if SPLIT defined)
@@ -240,6 +250,9 @@ class PilotBladeStudy : public edm::EDAnalyzer
     void init() {
       x=NOVAL_F;
       y=NOVAL_F;
+      glx=NOVAL_F;
+      gly=NOVAL_F;
+      glz=NOVAL_F;
       sizeX=NOVAL_I;
       sizeY=NOVAL_I;
       i=NOVAL_I;
@@ -250,7 +263,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
         adc[i]=pix[i][0]=pix[i][1]=NOVAL_F;
       }
 
-      list="x:y:sizeX/I:sizeY:i:edge:size:charge/F:adc[size]";
+       list="x/F:y/F:glx/F:gly/F:glz/F:sizeX/I:sizeY/I:i/I:edge/I:size/I:charge/F:adc[size]";
     }
     
     
@@ -352,6 +365,11 @@ class PilotBladeStudy : public edm::EDAnalyzer
     float res_dx;
     float res_dz;
     int hit_near;
+    
+    int nclu_mod;
+    int nclu_roc;
+    int npix_mod;
+    int npix_roc;
 
     float dx_cl[2];
     float dx_cl_corr[2];
@@ -408,7 +426,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
       beta=NOVAL_F;
       norm_charge=NOVAL_F;
 
-      list="lx/F:ly/F:glx/F:gly/F:glz/F:res_dx/F:res_dz/F:hit_near/I:"
+      list="lx/F:ly/F:glx/F:gly/F:glz/F:res_dx/F:res_dz/F:hit_near/I:nclu_mod/I:nclu_roc/I:npix_mod/I:npix_roc/I:"
 	    "dx_cl[2]/F:dx_cl_corr[2]/F:dy_cl[2]/F:dy_cl_corr[2]/F:dx_hit/F:dy_hit/F:i/I:onEdge/I:type/I:lx_err/F:ly_err/F:d_cl[2]/F:alpha/F:beta/F:norm_charge/F";
     }
 
@@ -458,8 +476,8 @@ class PilotBladeStudy : public edm::EDAnalyzer
 
   ModuleData getModuleData(uint32_t rawId, const std::map<uint32_t, int>& federrors, std::string scheme="offline");
 
+  void analyzeClusters(const edm::Event&, const edm::EventSetup&, std::string, std::map<uint32_t, int> federrors);
   int get_RocID_from_cluster_coords(const float&, const float&, const ModuleData&);
-
   int get_RocID_from_local_coords(const float&, const float&, const ModuleData&);
 				
   void findClosestClusters(const edm::Event&, const edm::EventSetup&, uint32_t, 

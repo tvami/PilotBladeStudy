@@ -9,7 +9,7 @@ using namespace reco;
 PilotBladeStudy::PilotBladeStudy(edm::ParameterSet const& iConfig) : iConfig_(iConfig) {
   eventTree_=NULL;
   trajTree_=NULL;
-  //clustTree_=NULL;
+  clustTree_=NULL;
   outfile_=NULL;
   
   isNewLS_ = false; 
@@ -36,17 +36,19 @@ void PilotBladeStudy::beginJob() {
   
   EventData         evt_;
   Cluster           clust;
+  Cluster           clusters;
   TrajMeasurement   trajmeas;
   
   eventTree_ = new TTree("eventTree", "The event");
   eventTree_->Branch("event",     &evt_,            evt_.list.data());
-    /*
+  
   clustTree_ = new TTree("clustTree", "Pixel clusters in the event");
   clustTree_->Branch("event",     &evt_,            evt_.list.data());
-  clustTree_->Branch("clust",     &clust,           clust.list.data());
-  clustTree_->Branch("module",    &clust.mod,       clust.mod.list.data());
-  clustTree_->Branch("module_on", &clust.mod_on,    clust.mod_on.list.data());
-  */
+  clustTree_->Branch("clusters",     &clusters,           clusters.list.data());
+  clustTree_->Branch("clust_pix", &clusters.pix,       "pix[size][2]/F");
+  clustTree_->Branch("module",    &clusters.mod,       clusters.mod.list.data());
+  clustTree_->Branch("module_on", &clusters.mod_on,    clusters.mod_on.list.data());
+  
   trajTree_ = new TTree("trajTree", "The trajectory measurements in the event");
   trajTree_->Branch("event",        &evt_,            evt_.list.data());
   trajTree_->Branch("track",      &trajmeas.trk,    trajmeas.trk.list.data());
@@ -137,7 +139,7 @@ void PilotBladeStudy::endLuminosityBlock(edm::LuminosityBlock const& iLumi, edm:
 
 // -------------------------------- analyze -----------------------------------
 void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  bool DEBUG = true;
+  bool DEBUG = false;
   if (DEBUG) std::cout << "Processing the event " << std::endl;
   //beginLuminosityBlock
   if (isNewLS_== true) {
@@ -252,6 +254,32 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   } 
   
   if (DEBUG) std::cout<<"DONE: Reading FEDError info\n";
+  
+  // Analyze clusters
+  
+  std::map<unsigned int, int> nclu_mod;
+  std::map<unsigned int, int> npix_mod;
+  std::map<unsigned long int, int> nclu_roc;
+  std::map<unsigned long int, int> npix_roc;
+
+  analyzeClusters(iEvent, iSetup, "siPixelClusters", federrors);
+  analyzeClusters(iEvent, iSetup, "PBClusters", federrors);
+
+  // ----------------------- start of filling the clusTree -----------------------
+  eventTree_->SetBranchAddress("event", &evt_);
+  eventTree_->Fill();
+  
+  Cluster cluster;
+  clustTree_->SetBranchAddress("event", &evt_);
+  clustTree_->SetBranchAddress("clusters", &cluster);
+  clustTree_->SetBranchAddress("module", &cluster.mod);
+  clustTree_->SetBranchAddress("clust_pix", &cluster.pix);
+  clustTree_->SetBranchAddress("module_on", &cluster.mod_on);
+  
+  for (size_t i=0; i<clusts_.size(); i++) {
+    cluster = clusts_[i];
+    clustTree_->Fill();
+  }
   
   // Process tracks
   if (trajTrackCollectionHandle.isValid()) {
@@ -475,6 +503,22 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   }
       }      
       trajmeas_[itrk][i].hit_near = minD;
+      
+      // Module/ROC Occupancies
+      trajmeas_[itrk][i].nclu_mod = (nclu_mod.count(trajmeas_[itrk][i].mod_on.rawid)) ?
+        nclu_mod[trajmeas_[itrk][i].mod_on.rawid] : 0;
+      trajmeas_[itrk][i].npix_mod = (npix_mod.count(trajmeas_[itrk][i].mod_on.rawid)) ?
+        npix_mod[trajmeas_[itrk][i].mod_on.rawid] : 0;
+      
+      int RocID = get_RocID_from_local_coords(trajmeas_[itrk][i].lx, trajmeas_[itrk][i].ly, trajmeas_[itrk][i].mod_on);
+      if (RocID!=NOVAL_I) {
+        unsigned long int modroc = trajmeas_[itrk][i].mod_on.rawid * 100 + RocID;
+        trajmeas_[itrk][i].nclu_roc = (nclu_roc.count(modroc)) ? nclu_roc[modroc] : 0;
+        trajmeas_[itrk][i].npix_roc = (npix_roc.count(modroc)) ? npix_roc[modroc] : 0;
+      } else { // Hit is outside module boundaries
+        trajmeas_[itrk][i].nclu_roc = NOVAL_I;
+        trajmeas_[itrk][i].npix_roc = NOVAL_I;
+      }
       
       traj = trajmeas_[itrk][i];
       trajTree_->Fill();
@@ -722,6 +766,164 @@ void PilotBladeStudy::findClosestClusters(
 
 }
 // ------------------------ end of findClosestClusters ------------------------ 
+
+// ------------------------------ analyzeClusters -----------------------------
+
+void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent, 
+                                         const edm::EventSetup& iSetup,  
+                                         std::string clusterColl,
+                                         std::map<uint32_t, int> federrors
+                                     ) {
+  bool DEBUG = false;
+  
+  for (size_t i=0; i<4; i++) evt_.nclu[i]=evt_.npix[i]=0;
+  std::map<unsigned int, int> nclu_mod;
+  std::map<unsigned int, int> npix_mod;
+  std::map<unsigned long int, int> nclu_roc;
+  std::map<unsigned long int, int> npix_roc;
+
+  edm::Handle<edmNew::DetSetVector<SiPixelCluster> > clusterCollectionHandle;
+  iEvent.getByLabel(clusterColl, clusterCollectionHandle);
+  
+  if (clusterCollectionHandle.isValid()) {
+    const edmNew::DetSetVector<SiPixelCluster>& clusterCollection = *clusterCollectionHandle;
+    edmNew::DetSetVector<SiPixelCluster>::const_iterator itClusterSet =  clusterCollection.begin();
+
+    edm::ESHandle<TrackerGeometry> tracker;
+    iSetup.get<TrackerDigiGeometryRecord>().get(tracker);    
+    const TrackerGeometry *tkgeom = &(*tracker);
+
+    edm::ESHandle<PixelClusterParameterEstimator> cpEstimator;
+    iSetup.get<TkPixelCPERecord>().get("PixelCPEGeneric", cpEstimator);
+    if (!cpEstimator.isValid()) {
+      std::cout << "The cpEstimator is not valid!" << std::endl;
+      //return itClosestCluster.begin();
+    }
+    const PixelClusterParameterEstimator &cpe(*cpEstimator);
+
+    for (; clusterCollectionHandle.isValid() && itClusterSet != clusterCollection.end();
+          itClusterSet++) {
+            DetId detId(itClusterSet->id());
+      unsigned int subDetId=detId.subdetId();
+         
+            if (DEBUG) std::cout << "Looping on the cluster sets ";
+      // Take only pixel clusters
+      if (subDetId!=PixelSubdetector::PixelEndcap && subDetId!=PixelSubdetector::PixelBarrel) {
+              std::cout << "Not a pixel cluster";
+              continue;
+      }
+      
+      const PixelGeomDetUnit *pixdet = (const PixelGeomDetUnit*) tkgeom->idToDetUnit(detId);
+      edmNew::DetSet<SiPixelCluster>::const_iterator itCluster=itClusterSet->begin();
+
+      for(; itCluster!=itClusterSet->end(); ++itCluster) {
+        if (DEBUG) std::cout << "Looping on the clusters in the set " << std::endl;
+                
+        const Surface& surface = tracker->idToDet(detId)->surface();
+
+        LocalPoint lp(-9999., -9999., -9999.);
+        PixelClusterParameterEstimator::ReturnType params = cpe.getParameters(*itCluster,*pixdet);
+        lp = std::get<0>(params);
+        LocalPoint lp1(1.0,0.0,0.0);
+        LocalPoint lp2(0.0,1.0,0.0);
+        LocalPoint lp3(1.0,0.0,1.0);
+        GlobalPoint gp = surface.toGlobal(lp);
+        //GlobalPoint gp1 = surface.toGlobal(lp1);
+        //std::cout << "GlobalPoint" << gp << std::endl;
+        
+        Cluster clust;
+        clust.x=itCluster->x();
+        clust.y=itCluster->y();
+        clust.glx = gp.x();
+        clust.gly = gp.y();
+        clust.glz = gp.z();
+        clust.sizeX=itCluster->sizeX();
+        clust.sizeY=itCluster->sizeY();
+        clust.i=itCluster-itClusterSet->begin();
+        clust.size=itCluster->size();
+        clust.charge=itCluster->charge()/1000.0;
+
+        for (int i=0; i<itCluster->size() && i<1000; i++) {
+          clust.adc[i]=float(itCluster->pixelADC()[i])/1000.0;
+          clust.pix[i][0]=((itCluster->pixels())[i]).x;
+          clust.pix[i][1]=((itCluster->pixels())[i]).y;
+        }
+        
+        clust.mod    = getModuleData(detId.rawId(), federrors);
+        clust.mod_on = getModuleData(detId.rawId(), federrors, "online");
+        
+        // Layer Occupancy
+        if (clust.mod_on.det!=NOVAL_I) {
+          evt_.nclu[(1-clust.mod_on.det)*clust.mod_on.layer]++;
+          evt_.npix[(1-clust.mod_on.det)*clust.mod_on.layer]+=itCluster->size();
+        }
+        // Module Occupancy
+        if (!nclu_mod.count(clust.mod_on.rawid)) nclu_mod[clust.mod_on.rawid] = 0;
+        if (!npix_mod.count(clust.mod_on.rawid)) npix_mod[clust.mod_on.rawid] = 0;
+        nclu_mod[clust.mod_on.rawid]++;
+        npix_mod[clust.mod_on.rawid]+=itCluster->size();
+        // Roc Occupancy
+        int RocID = get_RocID_from_cluster_coords(clust.x, clust.y, clust.mod_on);
+        unsigned long int modroc = clust.mod_on.rawid * 100 + RocID;
+        if (!nclu_roc.count(modroc)) nclu_roc[modroc] = 0;
+        if (!npix_roc.count(modroc)) npix_roc[modroc] = 0;
+        nclu_roc[modroc]++;
+        npix_roc[modroc]+=itCluster->size();
+        
+
+
+
+        if (DEBUG) std::cout<<"\t#"<<clust.i<<" charge: "<<clust.charge<<" size: "<<clust.size<<std::endl;
+
+        clusts_.push_back(clust);
+      }
+    } // loop on cluster sets
+  } else {
+    std::cout<< "The clusterCollectionHandle is invalid" << std::endl;
+  }
+}
+
+int PilotBladeStudy::get_RocID_from_cluster_coords(const float& x, const float& y, const PilotBladeStudy::ModuleData& mod_on) {
+  if (x!=NOVAL_F&&y!=NOVAL_F) {
+    if (mod_on.det==0) {
+      int ny = (int)(y / 52.0);
+      int roc = (mod_on.half) ? ((mod_on.module<0)*8+ny) : ((mod_on.module>0) ? ((x>80.0) ? ny : 15-ny) : ((x>80.0) ? 8+ny : 7-ny));
+      return roc;
+    } else if (mod_on.det==1) {
+      int nrocly = mod_on.module + mod_on.panel;
+      int rocy = (int)(y/52.0);
+      int roc = ((mod_on.panel==2 && x<80.0)
+                 || (mod_on.panel==1 && (mod_on.module==1||mod_on.module==4))
+                 || (mod_on.panel==1 && (mod_on.module==2||mod_on.module==3) && x>80.0 )) ? rocy
+        : 2*nrocly -1 - rocy;
+      return roc;
+    } else return NOVAL_I;
+  } else return NOVAL_I;
+}
+
+int PilotBladeStudy::get_RocID_from_local_coords(const float& lx, const float& ly, const PilotBladeStudy::ModuleData& mod_on) {
+  if (lx!=NOVAL_F&&ly!=NOVAL_F) {
+    if (mod_on.det==0) {
+      if (fabs(ly)<3.24&&((mod_on.half==0&&fabs(lx)<0.8164)||(mod_on.half==1&&fabs(lx)<0.4082))) {
+        int ny = (int)(ly / 0.81 + 4);
+        int roc = (mod_on.half) ? ((mod_on.module<0)*8+ny) : ((mod_on.module>0) ? ((lx>0.0) ? ny : 15-ny) : ((lx>0.0) ? 8+ny : 7-ny));
+        return roc;
+      } else return NOVAL_I;
+    } else if (mod_on.det==1) {
+      int nrocly = mod_on.module + mod_on.panel;
+      if (fabs(ly)<(nrocly*0.405) && ( ( !(mod_on.panel==1&&(mod_on.module==1||mod_on.module==4)) && fabs(lx)<0.8164 ) || (fabs(lx)<0.4082) )) {
+        int rocy = (int)((ly+(nrocly%2)*0.405)/0.81+nrocly/2);
+        int roc = ((mod_on.panel==2 && lx<0.0)
+                   || (mod_on.panel==1 && (mod_on.module==1||mod_on.module==4))
+                   || (mod_on.panel==1 && (mod_on.module==2||mod_on.module==3) && lx>0.0 )) ? rocy
+          : 2*nrocly -1 - rocy;
+        return roc;
+      } else return NOVAL_I;
+    } else return NOVAL_I;
+  } else return NOVAL_I;
+}
+
+
 // Other useful things
 /*
   DetID == 344130820 || DetID == 344131844 || DetID == 344132868 
