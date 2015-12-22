@@ -45,7 +45,7 @@ void PilotBladeStudy::beginJob() {
   clustTree_ = new TTree("clustTree", "Pixel clusters in the event");
   clustTree_->Branch("event",     &evt_,            evt_.list.data());
   clustTree_->Branch("clusters",     &clusters,           clusters.list.data());
-  clustTree_->Branch("clust_pix", &clusters.pix,       "pix[size][2]/F");
+//   clustTree_->Branch("clust_pix", &clusters.pix,       "pix[size][2]/F");
   clustTree_->Branch("module",    &clusters.mod,       clusters.mod.list.data());
   clustTree_->Branch("module_on", &clusters.mod_on,    clusters.mod_on.list.data());
   
@@ -273,7 +273,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   clustTree_->SetBranchAddress("event", &evt_);
   clustTree_->SetBranchAddress("clusters", &cluster);
   clustTree_->SetBranchAddress("module", &cluster.mod);
-  clustTree_->SetBranchAddress("clust_pix", &cluster.pix);
+//   clustTree_->SetBranchAddress("clust_pix", &cluster.pix);
   clustTree_->SetBranchAddress("module_on", &cluster.mod_on);
   
   for (size_t i=0; i<clusts_.size(); i++) {
@@ -361,8 +361,9 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
           meas.beta = atan2(dir.z(), dir.y());
             
           // If Pilot Blade
-          if (meas.mod.disk == 3 && meas.mod.side == 1) {  
-            std::cout << "!!!!!!!! PilotBlade hit found !!!!!!!!" << std::endl;
+          if (meas.mod.disk == 3 && meas.mod.side == 1) {
+            std::cout << "***************************\n** PilotBlade hit found! **"<< std::endl;
+            std::cout << "***************************" << std::endl;
             nPBHits++;
             
       ClustData clu1;
@@ -427,8 +428,8 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
             meas.clu.y=(*clust).y();
             for (int i=0; i<(*clust).size() && i<1000; i++) {
               meas.clu.adc[i]=float((*clust).pixelADC()[i])/1000.0;
-              meas.clu.pix[i][0]=(((*clust).pixels())[i]).x;
-              meas.clu.pix[i][1]=(((*clust).pixels())[i]).y;
+              meas.clu.pixX[i]=(((*clust).pixels())[i]).x;
+              meas.clu.pixY[i]=(((*clust).pixels())[i]).y;
             }
           }
           
@@ -756,8 +757,8 @@ void PilotBladeStudy::findClosestClusters(
       clu.y=(itClosestCluster)->y();
       for (int i=0; i<(itClosestCluster)->size() && i<1000; i++) {
   clu.adc[i]=float((itClosestCluster)->pixelADC()[i])/1000.0;
-  clu.pix[i][0]=(((itClosestCluster)->pixels())[i]).x;
-  clu.pix[i][1]=(((itClosestCluster)->pixels())[i]).y;
+  clu.pixX[i]=(((itClosestCluster)->pixels())[i]).x;
+  clu.pixY[i]=(((itClosestCluster)->pixels())[i]).y;
       }
     }
     
@@ -845,8 +846,8 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
 
         for (int i=0; i<itCluster->size() && i<1000; i++) {
           clust.adc[i]=float(itCluster->pixelADC()[i])/1000.0;
-          clust.pix[i][0]=((itCluster->pixels())[i]).x;
-          clust.pix[i][1]=((itCluster->pixels())[i]).y;
+          clust.pixX[i]=((itCluster->pixels())[i]).x;
+          clust.pixY[i]=((itCluster->pixels())[i]).y;
         }
         
         clust.mod    = getModuleData(detId.rawId(), federrors);
