@@ -2,8 +2,9 @@
 #define PilotBladeStudy_h
 
 /** \class PilotBladeStudy
- *
- *
+ * Author: Tamas Almos Vami
+ * Year: 2015
+ * Desciption header file of the PilotBladeStudy.cc
  ************************************************************/
 
 // ----------------------------------------------------------------------------------------
@@ -242,7 +243,8 @@ class PilotBladeStudy : public edm::EDAnalyzer
     float charge;
     // adc must be the last variable of the branch
     float adc[1000];
-    float pix[1000][2];
+    float pixX[1000];
+    float pixY[1000];
 
     std::string list;
 
@@ -259,11 +261,11 @@ class PilotBladeStudy : public edm::EDAnalyzer
       edge=NOVAL_I;
       size=0;
       charge=NOVAL_F;
-      for (size_t i=0; i<1000; i++) {
-        adc[i]=pix[i][0]=pix[i][1]=NOVAL_F;
-      }
+      for (size_t i=0; i<1000; i++) { adc[i]=NOVAL_F;  }
+      for (size_t i=0; i<1000; i++) { pixX[i]=NOVAL_F; }
+      for (size_t i=0; i<1000; i++) { pixY[i]=NOVAL_F; }
 
-       list="x/F:y/F:glx/F:gly/F:glz/F:sizeX/I:sizeY/I:i/I:edge/I:size/I:charge/F:adc[size]";
+      list="x/F:y/F:glx/F:gly/F:glz/F:sizeX/I:sizeY/I:i/I:edge/I:size/I:charge/F:adc[size]/F:pixX[size]/F:pixY[size]/F";
     }
     
     
