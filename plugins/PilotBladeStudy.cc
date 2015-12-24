@@ -14,6 +14,15 @@ PilotBladeStudy::PilotBladeStudy(edm::ParameterSet const& iConfig) : iConfig_(iC
   
   isNewLS_ = false; 
   usePixelCPE_=false;
+  
+  //tokens
+  tok_BS_           = consumes<reco::BeamSpot>(edm::InputTag("offlineBeamSpot"));
+  tok_siPixelDigis_ = consumes< edm::DetSetVector<SiPixelRawDataError> >(edm::InputTag("siPixelDigis"));
+  tok_siPixelClusters_ = consumes< edmNew::DetSetVector<SiPixelCluster> >(edm::InputTag("siPixelClusters"));
+  tok_PBClusters_ = consumes< edmNew::DetSetVector<SiPixelCluster> >(edm::InputTag("PBClusters"));
+  tok_Refitter_ = consumes< edm::AssociationMap<edm::OneToOne<std::vector<Trajectory>,std::vector<reco::Track>,unsigned short> > >(edm::InputTag("Refitter"));
+//   tok_conditionsInEdm_ = consumes<edm::ConditionsInRunBlock>(edm::InputTag("conditionsInEdm")); // several errors using this
+
 }
 
 PilotBladeStudy::~PilotBladeStudy() { }
@@ -28,7 +37,7 @@ void PilotBladeStudy::beginJob() {
   
   if (iConfig_.exists("usePixelCPE")) {
     usePixelCPE_=iConfig_.getParameter<bool>("usePixelCPE");
-    std::cout<<"NON-DEFAULT PARAMETER: usePixelCPE= "<<usePixelCPE_<<std::endl;
+    std::cout<<"Pixel Cluster Parameter Estimator (CPE) is used "<<std::endl;
   }
   
   outfile_ = new TFile(fileName.c_str(), "RECREATE");
@@ -144,7 +153,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   //beginLuminosityBlock
   if (isNewLS_== true) {
     evt_.run = iEvent.id().run();
-    std::cout << "Run in the iEvent.id().run(): " << evt_.run << std::endl;
+    std::cout << "Run number: " << evt_.run << std::endl;
     evt_.ls=iEvent.luminosityBlock();
     isNewLS_=false;
   } else {
@@ -178,7 +187,9 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   assert(evt_.federrs_size==0);
   
   edm::Handle<edm::DetSetVector<SiPixelRawDataError> >  siPixelRawDataErrorCollectionHandle;
-  iEvent.getByLabel("siPixelDigis", siPixelRawDataErrorCollectionHandle);  
+  
+//   iEvent.getByLabel("siPixelDigis", siPixelRawDataErrorCollectionHandle);  // change to getByToken
+   iEvent.getByToken(tok_siPixelDigis_, siPixelRawDataErrorCollectionHandle); // Tav return
   
   if (siPixelRawDataErrorCollectionHandle.isValid()) {
     if (DEBUG) std::cout << "siPixelRawDataErrorCollectionHandle is valid" << std::endl;
@@ -223,7 +234,8 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     std::cout << "siPixelRawDataErrorCollectionHandle is not valid" << std::endl;
     // Tracking Error list
     edm::Handle<edm::EDCollection<DetId> > TrackingErrorDetIdCollectionHandle;
-    iEvent.getByLabel("siPixelDigis", TrackingErrorDetIdCollectionHandle);
+//     iEvent.getByLabel("siPixelDigis", TrackingErrorDetIdCollectionHandle); //Tav tokens vissza
+    iEvent.getByToken(tok_siPixelDigis_, TrackingErrorDetIdCollectionHandle);
     
     if (TrackingErrorDetIdCollectionHandle.isValid()) {
       const edm::EDCollection<DetId>& TrackingErrorDetIdCollection = *TrackingErrorDetIdCollectionHandle;
@@ -235,7 +247,9 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     
     // User Error List (Overflow only by default)
     edm::Handle<edm::EDCollection<DetId> > UserErrorDetIdCollectionHandle;
-    iEvent.getByLabel("siPixelDigis", "UserErrorModules", UserErrorDetIdCollectionHandle);
+//  iEvent.getByLabel("siPixelDigis", "UserErrorModules", UserErrorDetIdCollectionHandle); //Tav tokens
+/*    iEvent.getByToken(tok_siPixelDigis_, "UserErrorModules", UserErrorDetIdCollectionHandle);  */  
+    iEvent.getByToken(tok_siPixelDigis_, UserErrorDetIdCollectionHandle);  
     
     if (UserErrorDetIdCollectionHandle.isValid()) {
       const edm::EDCollection<DetId>& UserErrorDetIdCollection = *UserErrorDetIdCollectionHandle;
@@ -262,8 +276,10 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   std::map<unsigned long int, int> nclu_roc;
   std::map<unsigned long int, int> npix_roc;
 
-  analyzeClusters(iEvent, iSetup, "siPixelClusters", federrors);
-  analyzeClusters(iEvent, iSetup, "PBClusters", federrors);
+//   analyzeClusters(iEvent, iSetup, "siPixelClusters", federrors);
+//   analyzeClusters(iEvent, iSetup, "PBClusters", federrors);
+  analyzeClusters(iEvent, iSetup, tok_siPixelClusters_, federrors); //Tav tokes
+  analyzeClusters(iEvent, iSetup, tok_PBClusters_, federrors); //Tav tokens
 
   // ----------------------- start of filling the clusTree -----------------------
   eventTree_->SetBranchAddress("event", &evt_);
@@ -369,13 +385,13 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       ClustData clu1;
             findClosestClusters(iEvent, iSetup, recHit->geographicalId().rawId(),
         meas.lx, meas.ly, meas.dx_cl, meas.dy_cl, 
-                                "PBClusters", clu1
+                                tok_PBClusters_, clu1
             );
             
       ClustData clu2;
             findClosestClusters(iEvent, iSetup, recHit->geographicalId().rawId(),
                                 (meas.lx-0.003301), (meas.ly+0.001494), meas.dx_cl_corr, meas.dy_cl_corr, 
-                                "PBClusters", clu2
+                                tok_PBClusters_, clu2
             );
             
       // Read associated cluster parameters
@@ -403,7 +419,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       if (1) { // choose cluster found by us to FPix hits, or the ones tracking has associated
         ClustData clu;
         findClosestClusters(iEvent, iSetup, recHit->geographicalId().rawId(),
-          meas.lx, meas.ly, meas.dx_cl, meas.dy_cl, "siPixelClusters", clu);
+          meas.lx, meas.ly, meas.dx_cl, meas.dy_cl, tok_siPixelClusters_, clu);
         meas.clu=clu;
         
         for (size_t i=0; i<2; i++) {
@@ -650,7 +666,7 @@ PilotBladeStudy::ModuleData PilotBladeStudy::getModuleData
 void PilotBladeStudy::findClosestClusters(
   const edm::Event& iEvent, 
   const edm::EventSetup& iSetup, uint32_t rawId, 
-  float lx, float ly, float* dx_cl, float* dy_cl, std::string clusterColl,
+  float lx, float ly, float* dx_cl, float* dy_cl, edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> > clusterColl,
   ClustData& clu) {
   bool DEBUG = false;
   for (size_t i=0; i<1; i++) dx_cl[i]=dy_cl[i]=NOVAL_F;
@@ -674,7 +690,8 @@ void PilotBladeStudy::findClosestClusters(
   edm::Handle<edmNew::DetSetVector<SiPixelCluster> > clusterCollectionHandle;
   // clusterColl string is given as an input
   // could be siPixelClusters or PBClusters
-  iEvent.getByLabel(clusterColl, clusterCollectionHandle);
+//   iEvent.getByLabel(clusterColl, clusterCollectionHandle); //Tav tokens
+  iEvent.getByToken(clusterColl, clusterCollectionHandle); //Tav tokens
   
   if (!clusterCollectionHandle.isValid()) {
     std::cout << "The clusterCollectionHandle is not valid!" << std::endl;
@@ -770,9 +787,14 @@ void PilotBladeStudy::findClosestClusters(
 
 // ------------------------------ analyzeClusters -----------------------------
 
+// void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent, 
+//                                          const edm::EventSetup& iSetup,  
+//                                          std::string clusterColl,
+//                                          std::map<uint32_t, int> federrors
+//                                      ) {
 void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent, 
                                          const edm::EventSetup& iSetup,  
-                                         std::string clusterColl,
+                                         edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> > clusterColl,
                                          std::map<uint32_t, int> federrors
                                      ) {
   bool DEBUG = false;
@@ -784,7 +806,8 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
   std::map<unsigned long int, int> npix_roc;
 
   edm::Handle<edmNew::DetSetVector<SiPixelCluster> > clusterCollectionHandle;
-  iEvent.getByLabel(clusterColl, clusterCollectionHandle);
+//   iEvent.getByLabel(clusterColl, clusterCollectionHandle); //Tav tokens
+  iEvent.getByToken(clusterColl, clusterCollectionHandle);
   
   if (clusterCollectionHandle.isValid()) {
     const edmNew::DetSetVector<SiPixelCluster>& clusterCollection = *clusterCollectionHandle;
