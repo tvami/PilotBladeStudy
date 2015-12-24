@@ -2,8 +2,9 @@
 #define PilotBladeStudy_h
 
 /** \class PilotBladeStudy
- *
- *
+ * Author: Tamas Almos Vami
+ * Year: 2015
+ * Desciption header file of the PilotBladeStudy.cc
  ************************************************************/
 
 // ----------------------------------------------------------------------------------------
@@ -136,12 +137,19 @@ class PilotBladeStudy : public edm::EDAnalyzer
   virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
   virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
-
-
+  
  private:
   edm::ParameterSet iConfig_;
   edm::ESHandle<TrackerGeometry> tkGeom_;
   edm::ESHandle<MagneticField> magneticField_;
+  
+  edm::EDGetTokenT<reco::BeamSpot>                  		tok_BS_;
+  edm::EDGetTokenT< edm::DetSetVector<SiPixelRawDataError> >	tok_siPixelDigis_;
+  edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >	tok_siPixelClusters_;
+  edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >	tok_PBClusters_;
+  edm::EDGetTokenT< edm::AssociationMap<edm::OneToOne<std::vector<Trajectory>,std::vector<reco::Track>,unsigned short> > >	tok_Refitter_;
+//   edm::EDGetTokenT< edm::ConditionsInRunBlock>	tok_conditionsInEdm_;
+
 
   TTree* eventTree_;
   TTree* trackTree_;
@@ -242,7 +250,8 @@ class PilotBladeStudy : public edm::EDAnalyzer
     float charge;
     // adc must be the last variable of the branch
     float adc[1000];
-    float pix[1000][2];
+    float pixX[1000];
+    float pixY[1000];
 
     std::string list;
 
@@ -259,11 +268,11 @@ class PilotBladeStudy : public edm::EDAnalyzer
       edge=NOVAL_I;
       size=0;
       charge=NOVAL_F;
-      for (size_t i=0; i<1000; i++) {
-        adc[i]=pix[i][0]=pix[i][1]=NOVAL_F;
-      }
+      for (size_t i=0; i<1000; i++) { adc[i]=NOVAL_F;  }
+      for (size_t i=0; i<1000; i++) { pixX[i]=NOVAL_F; }
+      for (size_t i=0; i<1000; i++) { pixY[i]=NOVAL_F; }
 
-       list="x/F:y/F:glx/F:gly/F:glz/F:sizeX/I:sizeY/I:i/I:edge/I:size/I:charge/F:adc[size]";
+      list="x/F:y/F:glx/F:gly/F:glz/F:sizeX/I:sizeY/I:i/I:edge/I:size/I:charge/F:adc[size]/F:pixX[size]/F:pixY[size]/F";
     }
     
     
@@ -476,12 +485,14 @@ class PilotBladeStudy : public edm::EDAnalyzer
 
   ModuleData getModuleData(uint32_t rawId, const std::map<uint32_t, int>& federrors, std::string scheme="offline");
 
-  void analyzeClusters(const edm::Event&, const edm::EventSetup&, std::string, std::map<uint32_t, int> federrors);
+//   void analyzeClusters(const edm::Event&, const edm::EventSetup&, std::string, std::map<uint32_t, int> federrors);
+  void analyzeClusters(const edm::Event&, const edm::EventSetup&, edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >, std::map<uint32_t, int> federrors);
+  
   int get_RocID_from_cluster_coords(const float&, const float&, const ModuleData&);
   int get_RocID_from_local_coords(const float&, const float&, const ModuleData&);
 				
   void findClosestClusters(const edm::Event&, const edm::EventSetup&, uint32_t, 
-			   float, float, float*, float*, std::string, ClustData&);
+			   float, float, float*, float*, edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >, ClustData&);
 			    
 
 };
