@@ -137,12 +137,19 @@ class PilotBladeStudy : public edm::EDAnalyzer
   virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
   virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
-
-
+  
  private:
   edm::ParameterSet iConfig_;
   edm::ESHandle<TrackerGeometry> tkGeom_;
   edm::ESHandle<MagneticField> magneticField_;
+  
+  edm::EDGetTokenT<reco::BeamSpot>                  		tok_BS_;
+  edm::EDGetTokenT< edm::DetSetVector<SiPixelRawDataError> >	tok_siPixelDigis_;
+  edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >	tok_siPixelClusters_;
+  edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >	tok_PBClusters_;
+  edm::EDGetTokenT< edm::AssociationMap<edm::OneToOne<std::vector<Trajectory>,std::vector<reco::Track>,unsigned short> > >	tok_Refitter_;
+//   edm::EDGetTokenT< edm::ConditionsInRunBlock>	tok_conditionsInEdm_;
+
 
   TTree* eventTree_;
   TTree* trackTree_;
@@ -478,12 +485,14 @@ class PilotBladeStudy : public edm::EDAnalyzer
 
   ModuleData getModuleData(uint32_t rawId, const std::map<uint32_t, int>& federrors, std::string scheme="offline");
 
-  void analyzeClusters(const edm::Event&, const edm::EventSetup&, std::string, std::map<uint32_t, int> federrors);
+//   void analyzeClusters(const edm::Event&, const edm::EventSetup&, std::string, std::map<uint32_t, int> federrors);
+  void analyzeClusters(const edm::Event&, const edm::EventSetup&, edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >, std::map<uint32_t, int> federrors);
+  
   int get_RocID_from_cluster_coords(const float&, const float&, const ModuleData&);
   int get_RocID_from_local_coords(const float&, const float&, const ModuleData&);
 				
   void findClosestClusters(const edm::Event&, const edm::EventSetup&, uint32_t, 
-			   float, float, float*, float*, std::string, ClustData&);
+			   float, float, float*, float*, edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >, ClustData&);
 			    
 
 };
