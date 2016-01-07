@@ -378,8 +378,10 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
             
           // If Pilot Blade
           if (meas.mod.disk == 3 && meas.mod.side == 1) {
-            std::cout << "***************************\n** PilotBlade hit found! **"<< std::endl;
-            std::cout << "***************************" << std::endl;
+	    if (DEBUG) {
+	      std::cout << "***************************\n** PilotBlade hit found! **"<< std::endl;
+	      std::cout << "***************************" << std::endl;
+	    }
             nPBHits++;
             
       ClustData clu1;

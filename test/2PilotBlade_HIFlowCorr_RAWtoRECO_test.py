@@ -77,7 +77,7 @@ process.RECOSIMoutput = cms.OutputModule("PoolOutputModule",
     filterName = cms.untracked.string('')
   ),
   eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
-  fileName = cms.untracked.string('/data/vami/projects/pilotBlade/ppProcessing/PilotBlade_HIFlowCorr_RAWtoRECO_'+nEvents+'.root'),
+  fileName = cms.untracked.string('PilotBlade_HIFlowCorr_RAWtoRECO_'+nEvents+'.root'),
   outputCommands = cms.untracked.vstring(
     'drop *',
     #'keep *_*ixel*_*_*',
