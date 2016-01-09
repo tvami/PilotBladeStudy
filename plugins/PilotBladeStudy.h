@@ -243,12 +243,12 @@ class PilotBladeStudy : public edm::EDAnalyzer
     float glz;
     int sizeX;
     int sizeY;
-    // From here Split mode (if SPLIT defined)
+
     int i; // serial num of cluster in the given module
     int edge;     // set if there is a valid hit
     int size;
     float charge;
-    // adc must be the last variable of the branch
+
     float adc[1000];
     float pixX[1000];
     float pixY[1000];
@@ -268,11 +268,10 @@ class PilotBladeStudy : public edm::EDAnalyzer
       edge=NOVAL_I;
       size=0;
       charge=NOVAL_F;
-      for (size_t i=0; i<1000; i++) { adc[i]=NOVAL_F;  }
-      for (size_t i=0; i<1000; i++) { pixX[i]=NOVAL_F; }
-      for (size_t i=0; i<1000; i++) { pixY[i]=NOVAL_F; }
+      for (size_t i=0; i<1000; i++) { adc[i]=pixX[i]=pixY[i]=NOVAL_F; }
 
-      list="x/F:y/F:glx/F:gly/F:glz/F:sizeX/I:sizeY/I:i/I:edge/I:size/I:charge/F:adc[size]/F:pixX[size]/F:pixY[size]/F";
+
+      list="x/F:y/F:glx/F:gly/F:glz/F:sizeX/I:sizeY/I:i/I:edge/I:size/I:charge/F:adc[size]/F";
     }
     
     
@@ -455,7 +454,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
     
   };
 
-  std::vector<Cluster> clusts_;
+  std::vector<Cluster> clust_;
 
 
   class TrajMeasurement : public TrajMeasData {
@@ -480,7 +479,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
     evt_.init();
     tracks_.clear();
     trajmeas_.clear();
-    clusts_.clear();
+    clust_.clear();
   }
 
   ModuleData getModuleData(uint32_t rawId, const std::map<uint32_t, int>& federrors, std::string scheme="offline");
