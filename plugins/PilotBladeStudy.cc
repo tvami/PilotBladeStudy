@@ -45,26 +45,29 @@ void PilotBladeStudy::beginJob() {
   
   EventData         evt_;
   Cluster           clust;
-  Cluster           clusters;
   TrajMeasurement   trajmeas;
   
   eventTree_ = new TTree("eventTree", "The event");
   eventTree_->Branch("event",     &evt_,            evt_.list.data());
   
   clustTree_ = new TTree("clustTree", "Pixel clusters in the event");
-  clustTree_->Branch("event",     &evt_,            evt_.list.data());
-  clustTree_->Branch("clusters",     &clusters,           clusters.list.data());
-//   clustTree_->Branch("clust_pix", &clusters.pix,       "pix[size][2]/F");
-  clustTree_->Branch("module",    &clusters.mod,       clusters.mod.list.data());
-  clustTree_->Branch("module_on", &clusters.mod_on,    clusters.mod_on.list.data());
+  clustTree_->Branch("event",       &evt_,            evt_.list.data());
+  clustTree_->Branch("clusters",    &clust,           clust.list.data());
+  clustTree_->Branch("clust_pixX",  &clust.pixX,      "pixX[size]/F");
+  clustTree_->Branch("clust_pixY",  &clust.pixY,      "pixY[size]/F");
+  clustTree_->Branch("module",      &clust.mod,       clust.mod.list.data());
+  clustTree_->Branch("module_on",   &clust.mod_on,    clust.mod_on.list.data());
+
   
   trajTree_ = new TTree("trajTree", "The trajectory measurements in the event");
-  trajTree_->Branch("event",        &evt_,            evt_.list.data());
-  trajTree_->Branch("track",      &trajmeas.trk,    trajmeas.trk.list.data());
-  trajTree_->Branch("traj",       &trajmeas,        trajmeas.list.data());
-  trajTree_->Branch("clust",      &trajmeas.clu,    trajmeas.clu.list.data());
-  trajTree_->Branch("module",     &trajmeas.mod,    trajmeas.mod.list.data());
-  trajTree_->Branch("module_on",  &trajmeas.mod_on, trajmeas.mod_on.list.data());
+  trajTree_->Branch("event",        &evt_,              evt_.list.data());
+  trajTree_->Branch("track",        &trajmeas.trk,      trajmeas.trk.list.data());
+  trajTree_->Branch("traj",         &trajmeas,          trajmeas.list.data());
+  trajTree_->Branch("clust",        &trajmeas.clu,      trajmeas.clu.list.data());
+  trajTree_->Branch("clust_pixX",   &trajmeas.clu.pixX, "pixX[size]/F");
+  trajTree_->Branch("clust_pixY",   &trajmeas.clu.pixY, "pixY[size]/F");
+  trajTree_->Branch("module",       &trajmeas.mod,      trajmeas.mod.list.data());
+  trajTree_->Branch("module_on",    &trajmeas.mod_on,   trajmeas.mod_on.list.data());
 }
 
 // ------------------------------ endJob --------------------------------------
@@ -285,18 +288,27 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   eventTree_->SetBranchAddress("event", &evt_);
   eventTree_->Fill();
   
-  Cluster cluster;
-  clustTree_->SetBranchAddress("event", &evt_);
-  clustTree_->SetBranchAddress("clusters", &cluster);
-  clustTree_->SetBranchAddress("module", &cluster.mod);
+//  Cluster cluster;
+//   clustTree_->SetBranchAddress("clusters", &cluster);
+//   clustTree_->SetBranchAddress("module", &cluster.mod);
 //   clustTree_->SetBranchAddress("clust_pix", &cluster.pix);
-  clustTree_->SetBranchAddress("module_on", &cluster.mod_on);
+//   clustTree_->SetBranchAddress("module_on", &cluster.mod_on);
+//   
+//   for (size_t i=0; i<clust_.size(); i++) {
+//     cluster = clust_[i];
+//     clustTree_->Fill();
+//   }
   
-  for (size_t i=0; i<clusts_.size(); i++) {
-    cluster = clusts_[i];
+  clustTree_->SetBranchAddress("event", &evt_);
+  for (size_t i=0; i<clust_.size(); i++) {
+    clustTree_->SetBranchAddress("clusters", &clust_[i]);
+    clustTree_->SetBranchAddress("clust_pixX", &clust_[i].pixX);
+    clustTree_->SetBranchAddress("clust_pixY", &clust_[i].pixY);
+    clustTree_->SetBranchAddress("module", &clust_[i].mod);
+    clustTree_->SetBranchAddress("module_on", &clust_[i].mod_on);
     clustTree_->Fill();
   }
-  
+
   // Process tracks
   if (trajTrackCollectionHandle.isValid()) {
     evt_.ntracks = trajTrackCollectionHandle->size();
@@ -506,6 +518,8 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   trajTree_->SetBranchAddress("module",     &traj.mod);
   trajTree_->SetBranchAddress("module_on",  &traj.mod_on);
   trajTree_->SetBranchAddress("clust",      &traj.clu);
+  trajTree_->SetBranchAddress("clust_pixX", &traj.clu.pixX);
+  trajTree_->SetBranchAddress("clust_pixY", &traj.clu.pixY);
   trajTree_->SetBranchAddress("track",      &traj.trk);
   for (size_t itrk=0; itrk<trajmeas_.size(); itrk++) {
     for (size_t i=0; i<trajmeas_[itrk].size(); i++) {
@@ -901,7 +915,7 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
 
         if (DEBUG) std::cout<<"\t#"<<clust.i<<" charge: "<<clust.charge<<" size: "<<clust.size<<std::endl;
 
-        clusts_.push_back(clust);
+        clust_.push_back(clust);
       }
     } // loop on cluster sets
   } else {
