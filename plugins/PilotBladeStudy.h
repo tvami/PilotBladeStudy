@@ -148,7 +148,8 @@ class PilotBladeStudy : public edm::EDAnalyzer
   edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >	tok_siPixelClusters_;
   edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >	tok_PBClusters_;
   edm::EDGetTokenT< edm::AssociationMap<edm::OneToOne<std::vector<Trajectory>,std::vector<reco::Track>,unsigned short> > >	tok_Refitter_;
-//   edm::EDGetTokenT< edm::ConditionsInRunBlock>	tok_conditionsInEdm_;
+  edm::EDGetTokenT<edm::ConditionsInRunBlock> condInRunBlockToken_;
+  edm::EDGetTokenT<edm::ConditionsInLumiBlock> condInLumiBlockToken_;
 
 
   TTree* eventTree_;
