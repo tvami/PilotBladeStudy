@@ -22,7 +22,8 @@ PilotBladeStudy::PilotBladeStudy(edm::ParameterSet const& iConfig) : iConfig_(iC
   tok_PBClusters_ = consumes< edmNew::DetSetVector<SiPixelCluster> >(edm::InputTag("PBClusters"));
   tok_Refitter_ = consumes< edm::AssociationMap<edm::OneToOne<std::vector<Trajectory>,std::vector<reco::Track>,unsigned short> > >(edm::InputTag("Refitter"));
 //   tok_conditionsInEdm_ = consumes<edm::ConditionsInRunBlock>(edm::InputTag("conditionsInEdm")); // several errors using this
-
+  condInRunBlockToken_  = mayConsume<edm::ConditionsInRunBlock, InRun >(edm::InputTag("conditionsInEdm"));
+  condInLumiBlockToken_ = mayConsume<edm::ConditionsInLumiBlock, InLumi >(edm::InputTag("conditionsInEdm"));
 }
 
 PilotBladeStudy::~PilotBladeStudy() { }
@@ -84,7 +85,8 @@ void PilotBladeStudy::beginRun(edm::Run const& iRun, edm::EventSetup const& iSet
   
   // ConditionsInRunBlock for fill number
   edm::Handle<edm::ConditionsInRunBlock> condInRunBlock;
-  iRun.getByLabel("conditionsInEdm", condInRunBlock);
+  //iRun.getByLabel("conditionsInEdm", condInRunBlock);
+  iRun.getByToken(condInRunBlockToken_, condInRunBlock);
   if (condInRunBlock.isValid()) {
     evt_.fill = condInRunBlock->lhcFillNumber;
   } else if (evt_.run==1) {
@@ -100,7 +102,8 @@ void PilotBladeStudy::beginRun(edm::Run const& iRun, edm::EventSetup const& iSet
 void PilotBladeStudy::endRun(edm::Run const& iRun, edm::EventSetup const& iSetup){
   // ConditionsInRunBlock
   edm::Handle<edm::ConditionsInRunBlock> condInRunBlock;
-  iRun.getByLabel("conditionsInEdm", condInRunBlock);
+  //iRun.getByLabel("conditionsInEdm", condInRunBlock);
+  iRun.getByToken(condInRunBlockToken_, condInRunBlock);
   if (!condInRunBlock.isValid()) {
     std::cout<<" CondInRunBlock info is NOT available" << std::endl;
   } else {
@@ -132,7 +135,8 @@ void PilotBladeStudy::endLuminosityBlock(edm::LuminosityBlock const& iLumi, edm:
   
   // ConditionsInLumiBlock
   edm::Handle<edm::ConditionsInLumiBlock> cond;
-  iLumi.getByLabel("conditionsInEdm", cond);
+  //iLumi.getByLabel("conditionsInEdm", cond);
+  iLumi.getByToken(condInLumiBlockToken_, cond);
   if (!cond.isValid()) {
     std::cout<<"ConditionsInLumiBlock info is NOT available" << std::endl;
     return;
