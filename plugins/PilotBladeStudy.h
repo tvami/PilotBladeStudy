@@ -167,11 +167,13 @@ class PilotBladeStudy : public edm::EDAnalyzer
  public:
 
   // Event info
-	class EventData {
-	public:
-	  int fill;
+class EventData {
+  public:
+    int fill;
     int run;
     int ls;
+    int orb;
+    int bx;
     int evt;
 
     int nclu[4]; // [0: fpix, i: layer i]
@@ -179,6 +181,8 @@ class PilotBladeStudy : public edm::EDAnalyzer
     
     float intlumi;
     float instlumi;
+    int wbc;
+    int delay;
     int ntracks;
     int federrs_size;
     // must be the last variable of the object saved to TTree:
@@ -191,18 +195,22 @@ class PilotBladeStudy : public edm::EDAnalyzer
       fill=NOVAL_I;
       run=NOVAL_I;
       ls=NOVAL_I;
+      orb=NOVAL_I;
+      bx=NOVAL_I;
       evt=NOVAL_I;
       
       for (size_t i=0; i<4; i++) nclu[i]=npix[i]=NOVAL_I;
       
       intlumi=NOVAL_F;
       instlumi=NOVAL_F;
+      wbc=NOVAL_I;
+      delay=NOVAL_I;
       ntracks=NOVAL_I;
       federrs_size=0;
       for (size_t i=0; i<16; i++) federrs[i][0]=federrs[i][1]=NOVAL_I;
 
       
-      list="fill/I:run/I:ls/I:evt/I:nclu[4]/I:npix[4]/I:intlumi/F:instlumi/F:ntracks/I:federrs_size/I:"
+      list="fill/I:run/I:ls/I:orb/I:bx/I:evt/I:nclu[4]/I:npix[4]/I:intlumi/F:instlumi/F:wbc/I:delay/I:ntracks/I:federrs_size/I:"
       "federrs[federrs_size][2]";
     }
   } evt_;
