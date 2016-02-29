@@ -367,8 +367,14 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
           //std::cout << " Hit found on the Strip detector" << std::endl;
           continue;
         }
-        //Pixel Forward detector or Pixel Barrel detector
-        else if ( SubDetID == PixelSubdetector::PixelEndcap || SubDetID == PixelSubdetector::PixelBarrel ) {
+        
+        //Pixel Barrel detector
+        if( SubDetID == PixelSubdetector::PixelBarrel ) {
+          continue;
+        }
+        
+        //Pixel Forward detector
+        else if ( SubDetID == PixelSubdetector::PixelEndcap ) {
           //std::cout << " Hit found on the FPIX detector" << std::endl;
           nHits++;
           TrajectoryStateOnSurface predTrajState=trajStateComb(itTraj->forwardPredictedState(),
