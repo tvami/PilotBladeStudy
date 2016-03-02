@@ -5,25 +5,41 @@ using namespace std;
 using namespace edm;
 using namespace reco;
 
+//#define COMPLETE
+
 // ------------------------- Constructor & Destructor  ------------------------
 PilotBladeStudy::PilotBladeStudy(edm::ParameterSet const& iConfig) : iConfig_(iConfig) {
   eventTree_=NULL;
+  lumiTree_=NULL;
+  runTree_=NULL;
   trajTree_=NULL;
   clustTree_=NULL;
+  digiTree_=NULL;
   outfile_=NULL;
   
-  isNewLS_ = false; 
   usePixelCPE_=false;
+  
+  isNewLS_ = false; 
+  lumi_.init();
+
   
   //tokens
   tok_BS_           = consumes<reco::BeamSpot>(edm::InputTag("offlineBeamSpot"));
-  tok_siPixelDigis_ = consumes< edm::DetSetVector<SiPixelRawDataError> >(edm::InputTag("siPixelDigis"));
+  condInRunBlockToken_  = mayConsume<edm::ConditionsInRunBlock, InRun >(edm::InputTag("conditionsInEdm"));
+  condInLumiBlockToken_ = mayConsume<edm::ConditionsInLumiBlock, InLumi >(edm::InputTag("conditionsInEdm"));  
+  lumiSummaryToken_ = mayConsume<LumiSummary, InLumi >(edm::InputTag("lumiProducer"));
+  
+  tok_siPixelDigis_ = consumes<edm::DetSetVector<PixelDigi> >(edm::InputTag("siPixelDigis"));
+  tok_PBDigis_      = consumes<edm::DetSetVector<PixelDigi> >(edm::InputTag("PBDigis"));
   tok_siPixelClusters_ = consumes< edmNew::DetSetVector<SiPixelCluster> >(edm::InputTag("siPixelClusters"));
   tok_PBClusters_ = consumes< edmNew::DetSetVector<SiPixelCluster> >(edm::InputTag("PBClusters"));
+
+  trackingErrorToken_=consumes<edm::EDCollection<DetId> >(edm::InputTag("siPixelDigis"));
+  tok_SiPixelRawDataError_ = consumes< edm::DetSetVector<SiPixelRawDataError> >(edm::InputTag("siPixelDigis"));
+  userErrorToken_=consumes<edm::EDCollection<DetId> >(edm::InputTag("siPixelDigis", "UserErrorModules"));
+  
   tok_Refitter_ = consumes< edm::AssociationMap<edm::OneToOne<std::vector<Trajectory>,std::vector<reco::Track>,unsigned short> > >(edm::InputTag("Refitter"));
-//   tok_conditionsInEdm_ = consumes<edm::ConditionsInRunBlock>(edm::InputTag("conditionsInEdm")); // several errors using this
-  condInRunBlockToken_  = mayConsume<edm::ConditionsInRunBlock, InRun >(edm::InputTag("conditionsInEdm"));
-  condInLumiBlockToken_ = mayConsume<edm::ConditionsInLumiBlock, InLumi >(edm::InputTag("conditionsInEdm"));
+
 }
 
 PilotBladeStudy::~PilotBladeStudy() { }
@@ -47,9 +63,17 @@ void PilotBladeStudy::beginJob() {
   EventData         evt_;
   Cluster           clust;
   TrajMeasurement   trajmeas;
+  Digi digi;
   
   eventTree_ = new TTree("eventTree", "The event");
   eventTree_->Branch("event",     &evt_,            evt_.list.data());
+  
+  // The lumi
+  lumiTree_ = new TTree("lumiTree", "The lumi");
+  lumiTree_->Branch("lumi", &lumi_, lumi_.list.data());
+
+  runTree_ = new TTree("runTree", "The run");
+  runTree_->Branch("run", &run_, run_.list.data());
   
   clustTree_ = new TTree("clustTree", "Pixel clusters in the event");
   clustTree_->Branch("event",       &evt_,            evt_.list.data());
@@ -69,6 +93,52 @@ void PilotBladeStudy::beginJob() {
   trajTree_->Branch("clust_pixY",   &trajmeas.clu.pixY, "pixY[size]/F");
   trajTree_->Branch("module",       &trajmeas.mod,      trajmeas.mod.list.data());
   trajTree_->Branch("module_on",    &trajmeas.mod_on,   trajmeas.mod_on.list.data());
+
+
+  digiTree_ = new TTree("digiTree", "Pixel digis");
+  digiTree_->Branch("event", &evt_, evt_.list.data());
+  digiTree_->Branch("digi", &digi, digi.list.data());
+  digiTree_->Branch("module", &digi.mod, digi.mod.list.data());
+  digiTree_->Branch("module_on", &digi.mod_on, digi.mod_on.list.data());
+
+  // Get the configured WBC for each run
+  std::cout << "\nReading Runs_and_dacs.txt\n";
+  std::ifstream runsndacs_file;
+  runsndacs_file.open ("Runs_and_dacs.txt", ifstream::in);
+  int dac=NOVAL_I;
+
+  while (runsndacs_file.good()) {
+    std::string var=""; 
+    runsndacs_file >> var;
+    std::cout << "Read " << var;
+
+    if (var.find(".log")!=std::string::npos) { // Reset wbc when reading a new log file
+      dac=NOVAL_I;
+      //std::cout << " - Reset wbc" << endl;
+    } else if (var.find("WBC")!=std::string::npos) { // Read WBC
+      runsndacs_file >> dac;
+      //std::cout << " - WBC set to " << dac << endl;
+    } else if (var.find("dac")!=std::string::npos) { // Read dac
+      runsndacs_file >> dac;
+      dac*=-1;
+      //std::cout << " - WBC set to " << dac << endl;
+    } else if (var.find("Run")!=std::string::npos) { // Read delay
+      size_t run=0;
+      runsndacs_file >> run;
+      //std::cout << " - Run " << run;
+
+      std::map<size_t,int>::iterator it=wbc.find(run);
+      if (it==wbc.end()) {
+	wbc.insert(std::pair<size_t,int>(run, dac));
+	//std::cout << " new run, WBC " << dac << endl;
+      } else {
+	//if (it->second!=dac) std::cout << " old run with new WBC!!!";
+	//std::cout << std::endl;
+      }
+    }
+  }
+  runsndacs_file.close();
+
 }
 
 // ------------------------------ endJob --------------------------------------
@@ -80,19 +150,18 @@ void PilotBladeStudy::endJob() {
 
 // ------------------------------ beginRun ------------------------------------
 void PilotBladeStudy::beginRun(edm::Run const& iRun, edm::EventSetup const& iSetup){
-  evt_.init();
-  evt_.run = iRun.run();
+  run_.init();
+  run_.run = iRun.run();
   
   // ConditionsInRunBlock for fill number
   edm::Handle<edm::ConditionsInRunBlock> condInRunBlock;
-  //iRun.getByLabel("conditionsInEdm", condInRunBlock);
   iRun.getByToken(condInRunBlockToken_, condInRunBlock);
   if (condInRunBlock.isValid()) {
-    evt_.fill = condInRunBlock->lhcFillNumber;
-  } else if (evt_.run==1) {
-    evt_.fill = 0;
+     run_.fill = condInRunBlock->lhcFillNumber;
+  } else if (run_.run==1) {
+   run_.fill = 0;
   } else {
-    std::cout<<"No condInRunBlock info is available" << std::endl;
+    std::cout<<"** ERROR (beginRun): no condInRunBlock info is available\n";
     return;
   }
   std::cout<<"Begin Run: "<<evt_.run<<" in Fill: "<<evt_.fill<<std::endl;
@@ -102,55 +171,58 @@ void PilotBladeStudy::beginRun(edm::Run const& iRun, edm::EventSetup const& iSet
 void PilotBladeStudy::endRun(edm::Run const& iRun, edm::EventSetup const& iSetup){
   // ConditionsInRunBlock
   edm::Handle<edm::ConditionsInRunBlock> condInRunBlock;
-  //iRun.getByLabel("conditionsInEdm", condInRunBlock);
   iRun.getByToken(condInRunBlockToken_, condInRunBlock);
   if (!condInRunBlock.isValid()) {
     std::cout<<" CondInRunBlock info is NOT available" << std::endl;
   } else {
-    evt_.fill = condInRunBlock->lhcFillNumber;
-    evt_.run = iRun.run();
-    std::cout << " End Run: " << evt_.run << " in Fill: " << evt_.fill << std::endl;
+    run_.fill = condInRunBlock->lhcFillNumber;
+    run_.run = iRun.run();
+    std::cout<<"End Run: "<<run_.run<<" in Fill: "<<run_.fill<<std::endl;
   }
-  eventTree_->Fill();
+  runTree_->Fill();
 }
 
 // ------------------------ beginLuminosityBlock ------------------------------
 void PilotBladeStudy::beginLuminosityBlock(edm::LuminosityBlock const& iLumi, edm::EventSetup const& iSetup){
   isNewLS_ = true;
+  
+  assert(lumi_.run==NOVAL_I);
+  assert(lumi_.ls==NOVAL_I);
 }
 
 // -------------------------- endLuminosityBlock ------------------------------
 void PilotBladeStudy::endLuminosityBlock(edm::LuminosityBlock const& iLumi, edm::EventSetup const& iSetup){
   
   edm::Handle<LumiSummary> lumi;
-  iLumi.getByLabel("lumiProducer", lumi);
+  iLumi.getByToken(lumiSummaryToken_, lumi);
   if (!lumi.isValid()) {
     std::cout<<" LumiSummary info is NOT available " << std::endl;
-    evt_.init();
+    lumi_.init();
   } else {
-    evt_.init(); // temporal values deleted, now we fill it for real
-    evt_.intlumi=lumi->intgRecLumi();
-    evt_.instlumi=lumi->avgInsDelLumi();
+    lumi_.init(); // temporal values deleted, now we fill it for real
+    lumi_.intlumi=lumi->intgRecLumi();
+    lumi_.instlumi=lumi->avgInsDelLumi();
   }
   
   // ConditionsInLumiBlock
   edm::Handle<edm::ConditionsInLumiBlock> cond;
-  //iLumi.getByLabel("conditionsInEdm", cond);
   iLumi.getByToken(condInLumiBlockToken_, cond);
   if (!cond.isValid()) {
     std::cout<<"ConditionsInLumiBlock info is NOT available" << std::endl;
     return;
   }
   
-  evt_.run=iLumi.run();
-  evt_.ls=iLumi.luminosityBlock();
+  lumi_.fill = run_.fill;
+  lumi_.run  = iLumi.run();
+  lumi_.ls   = iLumi.luminosityBlock();
+  lumi_.time = iLumi.beginTime().unixTime();
   
-  std::cout << "New lumi block: Run " << evt_.run << " LS = " << evt_.ls;
-  std::cout << " inst lumi " << evt_.instlumi 
-      << " int lumi " << evt_.intlumi<<std::endl;
-  
-  //eventTree_->Fill();
-  evt_.init();
+  // InstLumi in units of ub-1s-1
+  std::cout << "New lumi block: Run " << lumi_.run << " LS = " << lumi_.ls;
+  std::cout << " inst lumi " << lumi_.instlumi << " int lumi " << lumi_.intlumi <<std::endl;
+  lumiTree_->Fill();
+  // make sure that the beginLuminosityBlock can check that we were called:
+  lumi_.init();
 }
 
 // -------------------------------- analyze -----------------------------------
@@ -158,22 +230,31 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   bool DEBUG = false;
   if (DEBUG) std::cout << "Processing the event " << std::endl;
   //beginLuminosityBlock
-  if (isNewLS_== true) {
-    evt_.run = iEvent.id().run();
-    std::cout << "Run number: " << evt_.run << std::endl;
-    evt_.ls=iEvent.luminosityBlock();
+  if (isNewLS_==true) { // beginLuminosityBlock() was just called
+    lumi_.run=iEvent.id().run();
+    lumi_.ls=iEvent.luminosityBlock();
     isNewLS_=false;
   } else {
-    assert(evt_.run == int(iEvent.id().run()));
-    assert(evt_.ls == int(iEvent.luminosityBlock()));
+    assert(lumi_.run == int(iEvent.id().run()));
+    assert(lumi_.ls == int(iEvent.luminosityBlock()));
   }
   
   init_all();
   
   // Read event info
+  evt_.fill=run_.fill;
   evt_.run=iEvent.id().run();
-  evt_.evt=iEvent.id().event();
   evt_.ls=iEvent.luminosityBlock();
+  evt_.orb=iEvent.orbitNumber();
+  evt_.bx=iEvent.bunchCrossing();
+  evt_.evt=iEvent.id().event();
+
+
+  evt_.wbc=wbc[iEvent.id().run()];
+  //evt_.delay=globaldelay[iEvent.id().run()]; // run && LS kent kene nem run szerint //kesobb
+
+
+  
   
   // Read track info
   edm::Handle<TrajTrackAssociationCollection> trajTrackCollectionHandle;
@@ -194,9 +275,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   assert(evt_.federrs_size==0);
   
   edm::Handle<edm::DetSetVector<SiPixelRawDataError> >  siPixelRawDataErrorCollectionHandle;
-  
-//   iEvent.getByLabel("siPixelDigis", siPixelRawDataErrorCollectionHandle);  // change to getByToken
-   iEvent.getByToken(tok_siPixelDigis_, siPixelRawDataErrorCollectionHandle); // Tav return
+  iEvent.getByToken(tok_SiPixelRawDataError_, siPixelRawDataErrorCollectionHandle); 
   
   if (siPixelRawDataErrorCollectionHandle.isValid()) {
     if (DEBUG) std::cout << "siPixelRawDataErrorCollectionHandle is valid" << std::endl;
@@ -241,8 +320,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     std::cout << "siPixelRawDataErrorCollectionHandle is not valid" << std::endl;
     // Tracking Error list
     edm::Handle<edm::EDCollection<DetId> > TrackingErrorDetIdCollectionHandle;
-//     iEvent.getByLabel("siPixelDigis", TrackingErrorDetIdCollectionHandle); //Tav tokens vissza
-    iEvent.getByToken(tok_siPixelDigis_, TrackingErrorDetIdCollectionHandle);
+    iEvent.getByToken(trackingErrorToken_, TrackingErrorDetIdCollectionHandle);
     
     if (TrackingErrorDetIdCollectionHandle.isValid()) {
       const edm::EDCollection<DetId>& TrackingErrorDetIdCollection = *TrackingErrorDetIdCollectionHandle;
@@ -254,9 +332,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     
     // User Error List (Overflow only by default)
     edm::Handle<edm::EDCollection<DetId> > UserErrorDetIdCollectionHandle;
-//  iEvent.getByLabel("siPixelDigis", "UserErrorModules", UserErrorDetIdCollectionHandle); //Tav tokens
-/*    iEvent.getByToken(tok_siPixelDigis_, "UserErrorModules", UserErrorDetIdCollectionHandle);  */  
-    iEvent.getByToken(tok_siPixelDigis_, UserErrorDetIdCollectionHandle);  
+    iEvent.getByToken(userErrorToken_, UserErrorDetIdCollectionHandle);
     
     if (UserErrorDetIdCollectionHandle.isValid()) {
       const edm::EDCollection<DetId>& UserErrorDetIdCollection = *UserErrorDetIdCollectionHandle;
@@ -275,7 +351,12 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   } 
   
   if (DEBUG) std::cout<<"DONE: Reading FEDError info\n";
-  
+
+  // Analyze digis
+  analyzeDigis(iEvent, iSetup, tok_siPixelDigis_, federrors);
+  analyzeDigis(iEvent, iSetup, tok_PBDigis_, federrors); 
+
+
   // Analyze clusters
   
   std::map<unsigned int, int> nclu_mod;
@@ -283,16 +364,15 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   std::map<unsigned long int, int> nclu_roc;
   std::map<unsigned long int, int> npix_roc;
 
-//   analyzeClusters(iEvent, iSetup, "siPixelClusters", federrors);
-//   analyzeClusters(iEvent, iSetup, "PBClusters", federrors);
-  analyzeClusters(iEvent, iSetup, tok_siPixelClusters_, federrors); //Tav tokes
-  analyzeClusters(iEvent, iSetup, tok_PBClusters_, federrors); //Tav tokens
+  analyzeClusters(iEvent, iSetup, tok_siPixelClusters_, federrors); 
+  analyzeClusters(iEvent, iSetup, tok_PBClusters_, federrors);
 
   // ----------------------- start of filling the clusTree -----------------------
   eventTree_->SetBranchAddress("event", &evt_);
   eventTree_->Fill();
   
 //  Cluster cluster;
+//  makes a crash
 //   clustTree_->SetBranchAddress("clusters", &cluster);
 //   clustTree_->SetBranchAddress("module", &cluster.mod);
 //   clustTree_->SetBranchAddress("clust_pix", &cluster.pix);
@@ -367,14 +447,16 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
           //std::cout << " Hit found on the Strip detector" << std::endl;
           continue;
         }
-        
-        //Pixel Barrel detector
-        if( SubDetID == PixelSubdetector::PixelBarrel ) {
-          continue;
-        }
-        
+// #ifdef COMPLETE        
+//         //Pixel Barrel and the Forward detector
+//         if( SubDetID == PixelSubdetector::PixelBarrel ||  SubDetID == PixelSubdetector::PixelEndcap  ) {
+// #else     
+//         if( SubDetID == PixelSubdetector::PixelBarrel ) {
+//           continue;
+//         }  
         //Pixel Forward detector
         else if ( SubDetID == PixelSubdetector::PixelEndcap ) {
+// #endif
           //std::cout << " Hit found on the FPIX detector" << std::endl;
           nHits++;
           TrajectoryStateOnSurface predTrajState=trajStateComb(itTraj->forwardPredictedState(),
@@ -566,7 +648,17 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       traj = trajmeas_[itrk][i];
       trajTree_->Fill();
     }
-  }  
+  }
+
+  Digi dig;
+  digiTree_->SetBranchAddress("event", &evt_);
+  digiTree_->SetBranchAddress("digi", &dig);
+  digiTree_->SetBranchAddress("module", &dig.mod);
+  digiTree_->SetBranchAddress("module_on", &dig.mod_on);
+  for (size_t i=0; i<digis_.size(); i++) {
+    dig = digis_[i];
+    digiTree_->Fill();
+  }
   // ----------------------- end of filling the trajTree ------------------------
 }//end of analyzer
 
@@ -687,6 +779,69 @@ PilotBladeStudy::ModuleData PilotBladeStudy::getModuleData
   return offline;
 }
 // ---------------------------- end of getModuleData --------------------------
+
+// ------------------------------ analyzeDigis -----------------------------
+
+void PilotBladeStudy::analyzeDigis(const edm::Event& iEvent, 
+                                         const edm::EventSetup& iSetup,  
+                                         edm::EDGetTokenT< edm::DetSetVector<PixelDigi> > digiColl,
+					 std::map<uint32_t, int> federrors
+                                     ) {
+  bool DEBUG = false;
+  
+//edm::Handle<edm::DetSetVector<PixelDigi> > digiCollectionHandle;
+  edm::Handle<edm::DetSetVector<PixelDigi> > digiCollectionHandle;
+  iEvent.getByToken(digiColl, digiCollectionHandle);
+  
+  if (digiCollectionHandle.isValid()) {
+  const edm::DetSetVector<PixelDigi>& digiCollection = *digiCollectionHandle;
+  edm::DetSetVector<PixelDigi>::const_iterator itDigiSet =  digiCollection.begin();
+  //const edm::DetSetVector<PixelDigi>& digiCollection = *digiCollectionHandle;
+  //edm::DetSetVector<PixelDigi>::const_iterator itDigiSet = digiCollection.begin();
+  // not sure whether to use the edmNew or not...
+    for (; itDigiSet!=digiCollection.end(); itDigiSet++) {
+      DetId detId(itDigiSet->detId());
+      unsigned int subDetId=detId.subdetId();
+
+      ModuleData module = getModuleData(detId.rawId(), federrors);
+      ModuleData module_on = getModuleData(detId.rawId(), federrors, "online");
+
+      if (DEBUG) std::cout << "Looping on the digi sets ";
+#ifdef COMPLETE
+      // in case we want to save the barrel and fpix digis too
+      if (subDetId!=PixelSubdetector::PixelEndcap && subDetId!=PixelSubdetector::PixelBarrel) {
+        std::cout << "Not a pixel digi";
+        continue;
+      }
+#else
+      // Take only the FPIX pixel digis
+      if (subDetId!=PixelSubdetector::PixelEndcap) {
+        std::cout << "Not a FPIX digi";
+        continue;
+      }
+#endif
+      //edm::DetSet<PixelDigi>::const_iterator itDigi=itDigiSet->begin();
+      edm::DetSet<PixelDigi>::const_iterator itDigi=itDigiSet->begin();
+      for(; itDigi!=itDigiSet->end(); ++itDigi) {
+        Digi digi;
+        digi.i=itDigi-itDigiSet->begin();
+        digi.row=itDigi->row();
+        digi.col=itDigi->column();
+        digi.adc=itDigi->adc();
+        digi.mod=module;
+        digi.mod_on=module_on;
+        digis_.push_back(digi);
+        if (DEBUG) {
+          std::cout<<"\t#"<<digi.i<<" adc "<<digi.adc<<" at ("<<digi.col<<", "<<digi.row<<")";
+          std::cout<<std::endl;
+        }
+      }
+    } // loop on digis
+  } else {
+    std::cout<< "The digiCollectionHandle is invalid" << std::endl;
+  }
+}
+// ---------------------------- end of analyzeDigis --------------------------
 
 // ---------------------------- findClosestClusters ---------------------------
 void PilotBladeStudy::findClosestClusters(
