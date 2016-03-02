@@ -144,19 +144,32 @@ class PilotBladeStudy : public edm::EDAnalyzer
   edm::ESHandle<MagneticField> magneticField_;
   
   edm::EDGetTokenT<reco::BeamSpot>                  		tok_BS_;
-  edm::EDGetTokenT< edm::DetSetVector<SiPixelRawDataError> >	tok_siPixelDigis_;
+  edm::EDGetTokenT<LumiSummary> lumiSummaryToken_;
+
+  edm::EDGetTokenT< edm::DetSetVector<PixelDigi> >	tok_siPixelDigis_;
+  edm::EDGetTokenT< edm::DetSetVector<PixelDigi> >	tok_PBDigis_;
   edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >	tok_siPixelClusters_;
   edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >	tok_PBClusters_;
+
+  edm::EDGetTokenT< edm::DetSetVector<SiPixelRawDataError> >	tok_SiPixelRawDataError_;
+  edm::EDGetTokenT<edm::EDCollection<DetId> > trackingErrorToken_;
+  edm::EDGetTokenT<edm::EDCollection<DetId> > userErrorToken_;
+
   edm::EDGetTokenT< edm::AssociationMap<edm::OneToOne<std::vector<Trajectory>,std::vector<reco::Track>,unsigned short> > >	tok_Refitter_;
   edm::EDGetTokenT<edm::ConditionsInRunBlock> condInRunBlockToken_;
   edm::EDGetTokenT<edm::ConditionsInLumiBlock> condInLumiBlockToken_;
 
-
   TTree* eventTree_;
+  TTree* lumiTree_;
+  TTree* runTree_;
   TTree* trackTree_;
+  TTree* digiTree_;
   TTree* clustTree_;
   TTree* trajTree_;
   TFile* outfile_;
+
+  std::map<size_t,int> wbc;
+  //std::map<size_t,int> globaldelay; //kesobb
 
   bool usePixelCPE_;
   bool isNewLS_;
@@ -167,53 +180,113 @@ class PilotBladeStudy : public edm::EDAnalyzer
  public:
 
   // Event info
-class EventData {
-  public:
+  class EventData {
+    public:
+      int fill;
+      int run;
+      int ls;
+      int orb;
+      int bx;
+      int evt;
+
+      int nclu[4]; // [0: fpix, i: layer i]
+      int npix[4]; // [0: fpix, i: layer i]
+    
+      float intlumi;
+      float instlumi;
+      int wbc;
+      int delay;
+      int ntracks;
+      int federrs_size;
+      // must be the last variable of the object saved to TTree:
+      int federrs[16][2]; // [error index] [0:Nerror, 1:errorType]
+    
+      std::string list;
+
+      EventData() { init(); };
+      void init() {
+        fill=NOVAL_I;
+        run=NOVAL_I;
+        ls=NOVAL_I;
+        orb=NOVAL_I;
+        bx=NOVAL_I;
+        evt=NOVAL_I;
+      
+        for (size_t i=0; i<4; i++) nclu[i]=npix[i]=NOVAL_I;
+      
+        intlumi=NOVAL_F;
+        instlumi=NOVAL_F;
+        wbc=NOVAL_I;
+        //delay=NOVAL_I;
+        ntracks=NOVAL_I;
+        federrs_size=0;
+        for (size_t i=0; i<16; i++) federrs[i][0]=federrs[i][1]=NOVAL_I;
+
+      
+      //list="fill/I:run/I:ls/I:orb/I:bx/I:evt/I:nclu[4]/I:npix[4]/I:intlumi/F:instlumi/F:"
+	//"wbc/I:delay/I:ntracks/I:federrs_size/I:federrs[federrs_size][2]";
+      list="fill/I:run/I:ls/I:orb/I:bx/I:evt/I:nclu[4]/I:npix[4]/I:intlumi/F:instlumi/F:"
+	"wbc/I:ntracks/I:federrs_size/I:federrs[federrs_size][2]";
+    }
+  } evt_;
+  
+  
+  // Lumi info
+  class LumiData {
+   public:
     int fill;
     int run;
     int ls;
-    int orb;
-    int bx;
-    int evt;
-
-    int nclu[4]; // [0: fpix, i: layer i]
-    int npix[4]; // [0: fpix, i: layer i]
-    
+    unsigned int time; // Unix time - seconds starting from 1970 Jan 01 00:00
+    //unsigned int beamint[2];
     float intlumi;
     float instlumi;
-    int wbc;
-    int delay;
-    int ntracks;
-    int federrs_size;
-    // must be the last variable of the object saved to TTree:
-    int federrs[16][2]; // [error index] [0:Nerror, 1:errorType]
-    
+    //float instlumi_ext;
+    //float pileup;
+    //int l1_size;
+    //int l1_prescale[1000]; // prescale for the L1 trigger with idx
+
     std::string list;
 
-    EventData() { init(); };
+    LumiData() { init(); };
     void init() {
       fill=NOVAL_I;
       run=NOVAL_I;
       ls=NOVAL_I;
-      orb=NOVAL_I;
-      bx=NOVAL_I;
-      evt=NOVAL_I;
-      
-      for (size_t i=0; i<4; i++) nclu[i]=npix[i]=NOVAL_I;
-      
+      time=abs(NOVAL_I);
+      //beamint[0]=beamint[1]=abs(NOVAL_I);
       intlumi=NOVAL_F;
       instlumi=NOVAL_F;
-      wbc=NOVAL_I;
-      delay=NOVAL_I;
-      ntracks=NOVAL_I;
-      federrs_size=0;
-      for (size_t i=0; i<16; i++) federrs[i][0]=federrs[i][1]=NOVAL_I;
-
+      //instlumi_ext=NOVAL_F;
+      //pileup=NOVAL_F;
+      //l1_size=0;
+      //for (size_t i=0; i<1000; i++) l1_prescale[i]=NOVAL_I;
       
-      list="fill/I:run/I:ls/I:orb/I:bx/I:evt/I:nclu[4]/I:npix[4]/I:intlumi/F:instlumi/F:wbc/I:delay/I:ntracks/I:federrs_size/I:"
-      "federrs[federrs_size][2]";
+      //list="fill/I:run:ls:time/i:beamint[2]:intlumi/F:instlumi:instlumi_ext:"
+	//  "pileup:l1_size/I:l1_prescale[l1_size]";
+      list="fill/I:run:ls:time/i:intlumi/F:instlumi/F";
+
     }
-  } evt_;
+
+  } lumi_;
+
+  // Run info
+  class RunData {
+   public:
+    int fill;
+    int run;
+
+    std::string list;
+
+    RunData() { init(); };
+    void init() {
+      fill=NOVAL_I;
+      run=NOVAL_I;
+      
+      list="fill/I:run";
+    }
+
+  } run_;
 
   // Track info
   class TrackData {
@@ -241,7 +314,29 @@ class EventData {
 
   std::vector<TrackData> tracks_;
 
-// Cluster info
+  // Digi info
+  class DigiData {
+   public:
+    int i; // serial num of digi in the given module
+    int row;
+    int col;
+    int adc;
+
+    std::string list;
+
+    DigiData() { init(); }
+    void init() {
+      i=NOVAL_I;
+      row=NOVAL_I;
+      col=NOVAL_I;
+      adc=NOVAL_I;
+      list="i/I:row:col:adc";
+    }
+  };
+
+
+
+  // Cluster info
   class ClustData {
    public:
     // Paired branches (SPLIT mode)
@@ -283,8 +378,6 @@ class EventData {
       list="x/F:y/F:glx/F:gly/F:glz/F:sizeX/I:sizeY/I:i/I:edge/I:size/I:charge/F:adc[size]/F";
     }
     
-    
-  
   };
   // Module info
   class ModuleData {
@@ -446,8 +539,24 @@ class EventData {
       list="lx/F:ly/F:glx/F:gly/F:glz/F:res_dx/F:res_dz/F:hit_near/I:nclu_mod/I:nclu_roc/I:npix_mod/I:npix_roc/I:"
 	    "dx_cl[2]/F:dx_cl_corr[2]/F:dy_cl[2]/F:dy_cl_corr[2]/F:dx_hit/F:dy_hit/F:i/I:onEdge/I:type/I:lx_err/F:ly_err/F:d_cl[2]/F:alpha/F:beta/F:norm_charge/F";
     }
-
   };
+
+  class Digi : public DigiData {
+   public:
+
+    ModuleData mod; // offline module number
+    ModuleData mod_on; // online module number
+    
+    Digi() { mod.init(); mod_on.init(); }
+    void init() {
+      DigiData::init();
+      mod.init();
+      mod_on.init();
+    }
+  };
+
+  std::vector<Digi> digis_;
+
   class Cluster : public ClustData {
    public:
 
@@ -460,7 +569,6 @@ class EventData {
       mod.init();
       mod_on.init();
     }
-    
   };
 
   std::vector<Cluster> clust_;
@@ -489,11 +597,12 @@ class EventData {
     tracks_.clear();
     trajmeas_.clear();
     clust_.clear();
+    digis_.clear();
   }
 
   ModuleData getModuleData(uint32_t rawId, const std::map<uint32_t, int>& federrors, std::string scheme="offline");
 
-//   void analyzeClusters(const edm::Event&, const edm::EventSetup&, std::string, std::map<uint32_t, int> federrors);
+  void analyzeDigis(const edm::Event&, const edm::EventSetup&, edm::EDGetTokenT< edm::DetSetVector<PixelDigi> >, std::map<uint32_t, int> federrors);
   void analyzeClusters(const edm::Event&, const edm::EventSetup&, edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >, std::map<uint32_t, int> federrors);
   
   int get_RocID_from_cluster_coords(const float&, const float&, const ModuleData&);
