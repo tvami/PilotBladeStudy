@@ -20,7 +20,6 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 #for the Pilot Blade reconstruction include the line below
 process.load('DPGAnalysis.PilotBladeStudy.PilotBladeSetup_cfi')
 
-
 # ------------------- Input ----------------------------
 nEvents =  'test'
 
@@ -28,18 +27,8 @@ process.maxEvents = cms.untracked.PSet(
   input = cms.untracked.int32(-1)
 )
 
-'''
-# List of input files
-from PoolSource_PB_ppData_RECO import *
-InputFiles = FileNames
-process.source = cms.Source("PoolSource",
-  fileNames = InputFiles,
-  secondaryFileNames = cms.untracked.vstring()
-)
-'''
 process.source = cms.Source("PoolSource",
   fileNames = cms.untracked.vstring('file:2CosmicsPBRaw2Reco2_py_RAW2DIGI_L1Reco_RECO.root'),
-  #fileNames = cms.untracked.vstring('file:/data/vami/projects/pilotBlade/ppProcessing/PilotBlade_HIFlowCorr_RAWtoRECO_Run263742_1k.root'), #1k input
   secondaryFileNames = cms.untracked.vstring()
 )
 
@@ -63,7 +52,6 @@ process.configurationMetadata = cms.untracked.PSet(
 # --------------------- GlobalTag ----------------------
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
-#process.GlobalTag = GlobalTag(process.GlobalTag, '75X_dataRun2_Prompt_v2', '')
 #-------------------------------------------------------
 
 #---------------------- Refitter -----------------------
@@ -88,7 +76,6 @@ process.Refitter.src = 'cosmicMuons1Leg' # makes a crash: Invalid DetID: no Geom
 process.Refitter.src = 'standAloneMuons' # makes a crash: Invalid DetID: no GeomDet 
 process.Refitter.src = 'cosmicMuons1Leg' # makes a crash: Invalid DetID: no GeomDet 
 '''
-
 process.Refitter.TrajectoryInEvent = True
 #-------------------------------------------------------
 
