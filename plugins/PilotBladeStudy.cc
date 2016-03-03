@@ -1,11 +1,11 @@
 #include "PilotBladeStudy.h"
-#include "DataFormats/Math/interface/deltaPhi.h"
+//#include "DataFormats/Math/interface/deltaPhi.h"
 
 using namespace std;
 using namespace edm;
 using namespace reco;
 
-//#define COMPLETE
+#define COMPLETE
 
 // ------------------------- Constructor & Destructor  ------------------------
 PilotBladeStudy::PilotBladeStudy(edm::ParameterSet const& iConfig) : iConfig_(iConfig) {
@@ -33,13 +33,12 @@ PilotBladeStudy::PilotBladeStudy(edm::ParameterSet const& iConfig) : iConfig_(iC
   tok_PBDigis_      = consumes<edm::DetSetVector<PixelDigi> >(edm::InputTag("PBDigis"));
   tok_siPixelClusters_ = consumes< edmNew::DetSetVector<SiPixelCluster> >(edm::InputTag("siPixelClusters"));
   tok_PBClusters_ = consumes< edmNew::DetSetVector<SiPixelCluster> >(edm::InputTag("PBClusters"));
-
+   std::string trajTrackCollectionInput = iConfig.getParameter<std::string>("trajectoryInput");
+  trajTrackCollToken_=consumes<TrajTrackAssociationCollection>(edm::InputTag(trajTrackCollectionInput));
+  
   trackingErrorToken_=consumes<edm::EDCollection<DetId> >(edm::InputTag("siPixelDigis"));
   tok_SiPixelRawDataError_ = consumes< edm::DetSetVector<SiPixelRawDataError> >(edm::InputTag("siPixelDigis"));
   userErrorToken_=consumes<edm::EDCollection<DetId> >(edm::InputTag("siPixelDigis", "UserErrorModules"));
-  
-  tok_Refitter_ = consumes< edm::AssociationMap<edm::OneToOne<std::vector<Trajectory>,std::vector<reco::Track>,unsigned short> > >(edm::InputTag("Refitter"));
-
 }
 
 PilotBladeStudy::~PilotBladeStudy() { }
@@ -227,7 +226,7 @@ void PilotBladeStudy::endLuminosityBlock(edm::LuminosityBlock const& iLumi, edm:
 
 // -------------------------------- analyze -----------------------------------
 void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  bool DEBUG = false;
+  bool DEBUG = true;
   if (DEBUG) std::cout << "Processing the event " << std::endl;
   //beginLuminosityBlock
   if (isNewLS_==true) { // beginLuminosityBlock() was just called
@@ -258,9 +257,8 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   
   // Read track info
   edm::Handle<TrajTrackAssociationCollection> trajTrackCollectionHandle;
-  std::string trajTrackCollectionInput = iConfig_.getParameter<std::string>("trajectoryInput");
-  iEvent.getByLabel(trajTrackCollectionInput, trajTrackCollectionHandle);
-  
+  iEvent.getByToken(trajTrackCollToken_, trajTrackCollectionHandle);
+ 
   Surface::GlobalPoint origin = Surface::GlobalPoint(0,0,0);
 
   edm::ESHandle<TrackerGeometry> tracker;
@@ -394,8 +392,12 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   }
 
   // Process tracks
-  if (trajTrackCollectionHandle.isValid()) {
+  if (!trajTrackCollectionHandle.isValid()) {
+    std::cout << "trajTrackCollectionHandle is not valid, exiting the loop" << std::endl;
+  } else {
     evt_.ntracks = trajTrackCollectionHandle->size();
+    if (DEBUG) std::cout << "\n\nRun " << evt_.run << " Event " << evt_.evt;
+    if (DEBUG) std::cout << " Number of tracks =" <<trajTrackCollectionHandle->size()<<std::endl;
     
     // --------------------- loop on the trajTrackCollection ----------------------
     TrajTrackAssociationCollection::const_iterator 
@@ -413,7 +415,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       track_.eta=track.eta();
       track_.phi=track.phi();
       
-      if (!track.quality(reco::TrackBase::highPurity)) continue;
+      //if (!track.quality(reco::TrackBase::highPurity)) continue;
       std::vector<TrajectoryMeasurement> trajMeasurements = traj.measurements();
       TrajectoryStateCombiner trajStateComb;
       
@@ -441,24 +443,26 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
          } else if (recHit->getType() == TrackingRecHit::inactive) {
            meas.type=2;
          }
-         
+         std::cout << "detector ID: " << SubDetID << std::endl; //Debug
         //Strip detector
         if(SubDetID == 3 || SubDetID == 4 || SubDetID == 5 ||SubDetID == 6 ) {
           //std::cout << " Hit found on the Strip detector" << std::endl;
           continue;
         }
-// #ifdef COMPLETE        
-//         //Pixel Barrel and the Forward detector
-//         if( SubDetID == PixelSubdetector::PixelBarrel ||  SubDetID == PixelSubdetector::PixelEndcap  ) {
-// #else     
-//         if( SubDetID == PixelSubdetector::PixelBarrel ) {
-//           continue;
-//         }  
+#ifdef COMPLETE        
+        //Pixel Barrel and the Forward detector
+        
+        if( SubDetID == PixelSubdetector::PixelBarrel ||  SubDetID == PixelSubdetector::PixelEndcap  ) {
+#else     
+        if( SubDetID == PixelSubdetector::PixelBarrel ) {
+          continue;
+        }  
         //Pixel Forward detector
         else if ( SubDetID == PixelSubdetector::PixelEndcap ) {
-// #endif
+#endif
           //std::cout << " Hit found on the FPIX detector" << std::endl;
-          nHits++;
+          std::cout << "detector ID still: " << SubDetID << std::endl; //Debug
+	  nHits++;
           TrajectoryStateOnSurface predTrajState=trajStateComb(itTraj->forwardPredictedState(),
                                                                itTraj->backwardPredictedState());                                                 
           meas.lx=predTrajState.localPosition().x();
@@ -592,10 +596,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       trajmeas_.push_back(trajmeas);
     }
     // ------------------- end of loop on the trajTrackCollection -------------------
-  } else {
-    std::cout << " There is no valid trajTrackCollectionHandle" << std::endl;
-    return;
-  }//end of the IF: (trajTrackCollectionHandle.isValid())
+  } //end of the IF: (trajTrackCollectionHandle.isValid())
   
   std::cout << "Number of PB Hits: " << nPBHits << " out of " 
       << nHits << " in the events so far. "<<std::endl;
