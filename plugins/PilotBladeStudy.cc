@@ -252,19 +252,6 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   evt_.wbc=wbc[iEvent.id().run()];
   //evt_.delay=globaldelay[iEvent.id().run()]; // run && LS kent kene nem run szerint //kesobb
 
-
-  
-  
-  // Read track info
-  edm::Handle<TrajTrackAssociationCollection> trajTrackCollectionHandle;
-  iEvent.getByToken(trajTrackCollToken_, trajTrackCollectionHandle);
- 
-  Surface::GlobalPoint origin = Surface::GlobalPoint(0,0,0);
-
-  edm::ESHandle<TrackerGeometry> tracker;
-  iSetup.get<TrackerDigiGeometryRecord>().get(tracker);    
-
-  
   // Read FED error info
   
   std::map<uint32_t, int> federrors;
@@ -391,6 +378,15 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     clustTree_->Fill();
   }
 
+    // Read track info
+  edm::Handle<TrajTrackAssociationCollection> trajTrackCollectionHandle;
+  iEvent.getByToken(trajTrackCollToken_, trajTrackCollectionHandle);
+ 
+  Surface::GlobalPoint origin = Surface::GlobalPoint(0,0,0);
+
+  edm::ESHandle<TrackerGeometry> tracker;
+  iSetup.get<TrackerDigiGeometryRecord>().get(tracker);   
+  
   // Process tracks
   if (!trajTrackCollectionHandle.isValid()) {
     std::cout << "trajTrackCollectionHandle is not valid, exiting the loop" << std::endl;
