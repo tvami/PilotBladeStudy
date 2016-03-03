@@ -13,12 +13,10 @@ process = cms.Process('Analysis')
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
-process.load('Configuration.EventContent.EventContent_cff')
-#process.load('SimGeneral.MixingModule.mixNoPU_cfi')
-process.load('Configuration.Geometry.GeometrySimDB_cff')
-process.load('Configuration.Geometry.GeometryRecoDB_cff')
-process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
-process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
+process.load('Configuration.EventContent.EventContentCosmics_cff')
+process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
+process.load('Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cff')
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 #for the Pilot Blade reconstruction include the line below
 process.load('DPGAnalysis.PilotBladeStudy.PilotBladeSetup_cfi')
 
@@ -40,7 +38,7 @@ process.source = cms.Source("PoolSource",
 )
 '''
 process.source = cms.Source("PoolSource",
-  fileNames = cms.untracked.vstring('file:cosmics_PB_RAW2RECO_test100event.root'),
+  fileNames = cms.untracked.vstring('file:2CosmicsPBRaw2Reco2_py_RAW2DIGI_L1Reco_RECO.root'),
   #fileNames = cms.untracked.vstring('file:/data/vami/projects/pilotBlade/ppProcessing/PilotBlade_HIFlowCorr_RAWtoRECO_Run263742_1k.root'), #1k input
   secondaryFileNames = cms.untracked.vstring()
 )
@@ -63,7 +61,7 @@ process.configurationMetadata = cms.untracked.PSet(
 #-------------------------------------------------------
 
 # --------------------- GlobalTag ----------------------
-from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag
+from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
 #process.GlobalTag = GlobalTag(process.GlobalTag, '75X_dataRun2_Prompt_v2', '')
 #-------------------------------------------------------
@@ -71,10 +69,26 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
 #---------------------- Refitter -----------------------
 process.load("RecoTracker.TrackProducer.TrackRefitters_cff")
 process.Refitter = process.TrackRefitterP5.clone()
-#process.Refitter.src = 'ctfWithMaterialTracksP5'
 #process.Refitter = process.TrackRefitter.clone()
-#process.Refitter.src = 'ctfWithMaterialTracksCosmics'
-process.Refitter.src = 'regionalCosmicTracks'
+
+#process.Refitter.src = 'ctfWithMaterialTracksP5'
+#process.Refitter.src = 'ctfWithMaterialTracksCosmics' # kinda kizarva
+#process.Refitter.src = 'regionalCosmicTracks'
+process.Refitter.src = '' 
+'''
+cosmictrackfinderP5
+ctfWithMaterialTracksP5LHCNavigation, globalBeamHaloMuonEndCapslOnly, globalCosmicMuons
+process.Refitter.src = 'cosmicMuons' # makes a crash: Invalid DetID: no GeomDet associated
+process.Refitter.src = 'beamhaloTracks' # ntrack=0
+process.Refitter.src = 'ckfInOutTracksFromConversions'  # ntrack=0
+process.Refitter.src = 'ckfOutInTracksFromConversions' # ntrack=0
+process.Refitter.src = 'cosmicMuonsEndCapsOnly' # ntrack=0
+process.Refitter.src = 'cosmicMuonsNoRPC' # makes a crash: Invalid DetID: no GeomDet 
+process.Refitter.src = 'cosmicMuons1Leg' # makes a crash: Invalid DetID: no GeomDet 
+process.Refitter.src = 'standAloneMuons' # makes a crash: Invalid DetID: no GeomDet 
+process.Refitter.src = 'cosmicMuons1Leg' # makes a crash: Invalid DetID: no GeomDet 
+'''
+
 process.Refitter.TrajectoryInEvent = True
 #-------------------------------------------------------
 
