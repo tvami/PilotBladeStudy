@@ -1,5 +1,4 @@
 #include "PilotBladeStudy.h"
-//#include "DataFormats/Math/interface/deltaPhi.h"
 
 using namespace std;
 using namespace edm;
