@@ -101,6 +101,8 @@ void PilotBladeStudy::beginJob() {
   digiTree_->Branch("module_on", &digi.mod_on, digi.mod_on.list.data());
 
   // Get the configured WBC for each run
+  WBC.insert ( std::pair<size_t,int>('a',100) );
+  /*
   std::cout << "\nReading Runs_and_dacs.txt\n";
   std::ifstream runsndacs_file;
   runsndacs_file.open ("Runs_and_dacs.txt", ifstream::in);
@@ -137,7 +139,7 @@ void PilotBladeStudy::beginJob() {
     }
   }
   runsndacs_file.close();
-
+*/
 }
 
 // ------------------------------ endJob --------------------------------------
