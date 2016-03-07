@@ -602,13 +602,13 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       }
 
       if (meas.d_cl[0]!=NOVAL_F) {
-        LocalPoint lpmod(0.,0.,0.), lxdir(1.,0.,0.), lydir(0.,1.,0.);
-        GlobalPoint gpmod = surface.toGlobal(lpmod);
-        GlobalPoint glxdir = surface.toGlobal(lxdir);
-        GlobalPoint glydir = surface.toGlobal(lydir);
+        //LocalPoint lpmod(0.,0.,0.), lxdir(1.,0.,0.), lydir(0.,1.,0.);
+        //GlobalPoint gpmod = surface.toGlobal(lpmod);
+        //GlobalPoint glxdir = surface.toGlobal(lxdir);
+        //GlobalPoint glydir = surface.toGlobal(lydir);
         
-        //meas.dx_cl[0] *= (glxdir.perp() - gpmod.perp() >= 0 ? 1. : -1.);
-        //meas.dy_cl[0] *= (deltaPhi(glydir.phi(),gpmod.phi()) >= 0. ? 1. : -1.);
+        meas.dx_cl[0] *= (glxdir.perp() - gpmod.perp() >= 0 ? 1. : -1.);
+        meas.dy_cl[0] *= (deltaPhi(glydir.phi(),gpmod.phi()) >= 0. ? 1. : -1.);
 
       }
       
@@ -1170,4 +1170,5 @@ int PilotBladeStudy::get_RocID_from_local_coords(const float& lx, const float& l
   || DetID == 344133124 || DetID == 344134148 )
 */
 DEFINE_FWK_MODULE(PilotBladeStudy);
+
 
