@@ -2,7 +2,7 @@ import FWCore.ParameterSet.Config as cms
 
 from Configuration.Geometry.GeometrySimDB_cff import*
 from Configuration.Geometry.GeometryRecoDB_cff import*
-from Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff import*
+from Configuration.StandardSequences.FrontierConditions_GlobalTag_cff import*
 
 import CalibTracker.Configuration.Common.PoolDBESSource_cfi
 # ----------------------- CONDITIONS -------------------
@@ -135,7 +135,7 @@ es_prefer_LA = cms.ESPrefer("PoolDBESSource","LorentzAngleDBReader")
 trackerGeometryDB.applyAlignment = cms.bool(False)
 XMLFromDBSource.label=''
 PoolDBESSourceGeometry = cms.ESSource("PoolDBESSource",
-  CondDBSetup,
+  #CondDBSetup,
   timetype = cms.string('runnumber'),
   connect = cms.string('frontier://FrontierPrep/CMS_CONDITIONS'),
   #connect = cms.string('sqlite_file:/data/vami/projects/pilotBlade/1ConditionDBs/PilotGeometry.db') #local file
