@@ -607,8 +607,8 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
         //GlobalPoint glxdir = surface.toGlobal(lxdir);
         //GlobalPoint glydir = surface.toGlobal(lydir);
         
-        meas.dx_cl[0] *= (glxdir.perp() - gpmod.perp() >= 0 ? 1. : -1.);
-        meas.dy_cl[0] *= (deltaPhi(glydir.phi(),gpmod.phi()) >= 0. ? 1. : -1.);
+        //meas.dx_cl[0] *= (glxdir.perp() - gpmod.perp() >= 0 ? 1. : -1.);
+        //meas.dy_cl[0] *= (deltaPhi(glydir.phi(),gpmod.phi()) >= 0. ? 1. : -1.);
 
       }
       
