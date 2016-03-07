@@ -463,7 +463,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
         unsigned int DetID    = recHit->geographicalId();
         unsigned int SubDetID = recHit->geographicalId().subdetId();
 
-        const Surface& surface = tracker->idToDet(recHit->geographicalId())->surface();
+        //const Surface& surface = tracker->idToDet(recHit->geographicalId())->surface();
 
         meas.mod    = getModuleData(recHit->geographicalId().rawId(), federrors);
         meas.mod_on = getModuleData(recHit->geographicalId().rawId(), federrors, "online");
