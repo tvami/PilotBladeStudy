@@ -142,6 +142,8 @@ class PilotBladeStudy : public edm::EDAnalyzer
   edm::ParameterSet iConfig_;
   edm::ESHandle<TrackerGeometry> tkGeom_;
   edm::ESHandle<MagneticField> magneticField_;
+  edm::EDGetTokenT<edm::ConditionsInRunBlock> condInRunBlockToken_;
+  edm::EDGetTokenT<edm::ConditionsInLumiBlock> condInLumiBlockToken_;
   
   edm::EDGetTokenT<reco::BeamSpot>                  		tok_BS_;
   edm::EDGetTokenT<LumiSummary> lumiSummaryToken_;
@@ -150,14 +152,11 @@ class PilotBladeStudy : public edm::EDAnalyzer
   edm::EDGetTokenT< edm::DetSetVector<PixelDigi> >	tok_PBDigis_;
   edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >	tok_siPixelClusters_;
   edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >	tok_PBClusters_;
-
+  edm::EDGetTokenT<TrajTrackAssociationCollection> trajTrackCollToken_;
+  
   edm::EDGetTokenT< edm::DetSetVector<SiPixelRawDataError> >	tok_SiPixelRawDataError_;
   edm::EDGetTokenT<edm::EDCollection<DetId> > trackingErrorToken_;
   edm::EDGetTokenT<edm::EDCollection<DetId> > userErrorToken_;
-
-  edm::EDGetTokenT< edm::AssociationMap<edm::OneToOne<std::vector<Trajectory>,std::vector<reco::Track>,unsigned short> > >	tok_Refitter_;
-  edm::EDGetTokenT<edm::ConditionsInRunBlock> condInRunBlockToken_;
-  edm::EDGetTokenT<edm::ConditionsInLumiBlock> condInLumiBlockToken_;
 
   TTree* eventTree_;
   TTree* lumiTree_;
@@ -238,13 +237,9 @@ class PilotBladeStudy : public edm::EDAnalyzer
     int run;
     int ls;
     unsigned int time; // Unix time - seconds starting from 1970 Jan 01 00:00
-    //unsigned int beamint[2];
+
     float intlumi;
     float instlumi;
-    //float instlumi_ext;
-    //float pileup;
-    //int l1_size;
-    //int l1_prescale[1000]; // prescale for the L1 trigger with idx
 
     std::string list;
 
@@ -254,16 +249,9 @@ class PilotBladeStudy : public edm::EDAnalyzer
       run=NOVAL_I;
       ls=NOVAL_I;
       time=abs(NOVAL_I);
-      //beamint[0]=beamint[1]=abs(NOVAL_I);
       intlumi=NOVAL_F;
       instlumi=NOVAL_F;
-      //instlumi_ext=NOVAL_F;
-      //pileup=NOVAL_F;
-      //l1_size=0;
-      //for (size_t i=0; i<1000; i++) l1_prescale[i]=NOVAL_I;
-      
-      //list="fill/I:run:ls:time/i:beamint[2]:intlumi/F:instlumi:instlumi_ext:"
-	//  "pileup:l1_size/I:l1_prescale[l1_size]";
+
       list="fill/I:run:ls:time/i:intlumi/F:instlumi/F";
 
     }
@@ -308,7 +296,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
       eta=NOVAL_F;
       phi=NOVAL_F;
 
-      list=	"pt/F:ndof/F:chi2/F:eta/F:phi/F";
+      list="pt/F:ndof/F:chi2/F:eta/F:phi/F";
     }
   };
 
