@@ -425,7 +425,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   } else {
     evt_.ntracks = trajTrackCollectionHandle->size();
     if (DEBUG) std::cout << "\n\nRun " << evt_.run << " Event " << evt_.evt;
-    if (DEBUG) std::cout << " Number of tracks =" <<trajTrackCollectionHandle->size()<<std::endl;
+    if (DEBUG) std::cout << " Number of tracks = " <<trajTrackCollectionHandle->size()<<std::endl;
     
     // --------------------- loop on the trajTrackCollection ----------------------
     TrajTrackAssociationCollection::const_iterator 
@@ -878,7 +878,7 @@ void PilotBladeStudy::findClosestClusters(
   const edm::EventSetup& iSetup, uint32_t rawId, 
   float lx, float ly, float* dx_cl, float* dy_cl, edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> > clusterColl,
   ClustData& clu) {
-  bool DEBUG = false;
+  bool DEBUGfindClust = false;
   for (size_t i=0; i<1; i++) dx_cl[i]=dy_cl[i]=NOVAL_F;
   
   edm::ESHandle<PixelClusterParameterEstimator> cpEstimator;
@@ -899,9 +899,7 @@ void PilotBladeStudy::findClosestClusters(
   
   edm::Handle<edmNew::DetSetVector<SiPixelCluster> > clusterCollectionHandle;
   // clusterColl string is given as an input
-  // could be siPixelClusters or PBClusters
-//   iEvent.getByLabel(clusterColl, clusterCollectionHandle); //Tav tokens
-  iEvent.getByToken(clusterColl, clusterCollectionHandle); //Tav tokens
+  iEvent.getByToken(clusterColl, clusterCollectionHandle);
   
   if (!clusterCollectionHandle.isValid()) {
     std::cout << "The clusterCollectionHandle is not valid!" << std::endl;
@@ -920,12 +918,12 @@ void PilotBladeStudy::findClosestClusters(
   for ( ; itClusterSet!=clusterCollection.end(); itClusterSet++) {
     
     DetId detId(itClusterSet->id());
-    if (DEBUG) {
+    if (DEBUGfindClust) {
       std::cout << " Cluster rawId: " << detId.rawId();
       std::cout << "?= RecHit rawId: " << rawId << std::endl;
     }
     if (detId.rawId()!=rawId) {
-      if (DEBUG) std::cout << " Wrong rawId " << std::endl;
+      if (DEBUGfindClust) std::cout << " Wrong rawId " << std::endl;
       continue;
     }
     
@@ -946,11 +944,11 @@ void PilotBladeStudy::findClosestClusters(
       if (usePixelCPE_) {
   PixelClusterParameterEstimator::ReturnType params = cpe.getParameters(*itCluster,*pixdet);
   lp = std::get<0>(params);
-  if (DEBUG) std::cout << "PixelClusterParameterEstimator: " << lp << std::endl;
+  if (DEBUGfindClust) std::cout << "PixelClusterParameterEstimator: " << lp << std::endl;
       } 
       
       float D = sqrt((lp.x()-lx)*(lp.x()-lx)+(lp.y()-ly)*(lp.y()-ly));
-      if (DEBUG) std::cout << "Value of the D: " << D << std::endl; 
+      if (DEBUGfindClust) std::cout << "Value of the D: " << D << std::endl; 
       if (D<minD[0]) {
   minD[1]=minD[0];
   dx_cl[1]=dx_cl[0];
