@@ -306,11 +306,8 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     edm::DetSetVector<SiPixelRawDataError>::const_iterator itPixelErrorSet = siPixelRawDataErrorCollection.begin();
 
     for (; itPixelErrorSet!=siPixelRawDataErrorCollection.end(); itPixelErrorSet++) {
-      if (DEBUG) std::cout << "Looping on siPixelRawDataErrorCollection" << std::endl;
       edm::DetSet<SiPixelRawDataError>::const_iterator itPixelError=itPixelErrorSet->begin();
-      if (DEBUG) std::cout << "Before the loop on the error set" << std::endl;
       for(; itPixelError!=itPixelErrorSet->end(); ++itPixelError) {
-        if (DEBUG) std::cout << "Looping on the error set" << std::endl;
         if (DEBUG) { 
           std::cout << "FED ID: " << itPixelError->getFedId() << std::endl;
           std::cout << "Word32: " << itPixelError->getWord32() << std::endl;
@@ -339,7 +336,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   // Run this if siPixelRawDataErrorCollection is not available (eg in RECO)
   if (!siPixelRawDataErrorCollectionHandle.isValid()) {
     
-    std::cout << "siPixelRawDataErrorCollectionHandle is not valid" << std::endl;
+    std::cout << "siPixelRawDataErrorCollectionHandle is *NOT* valid" << std::endl;
     // Tracking Error list
     edm::Handle<edm::EDCollection<DetId> > TrackingErrorDetIdCollectionHandle;
     iEvent.getByToken(trackingErrorToken_, TrackingErrorDetIdCollectionHandle);
@@ -372,8 +369,6 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     }
   } 
   
-  if (DEBUG) std::cout<<"DONE: Reading FEDError info\n";
-
   // Analyze digis
   analyzeDigis(iEvent, iSetup, tok_siPixelDigis_, federrors);
   analyzeDigis(iEvent, iSetup, tok_PBDigis_, federrors); 
@@ -1012,7 +1007,7 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
                                          edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> > clusterColl,
                                          std::map<uint32_t, int> federrors
                                      ) {
-  bool DEBUG = false;
+  bool DEBUGClusters = false;
   
   for (size_t i=0; i<4; i++) evt_.nclu[i]=evt_.npix[i]=0;
   std::map<unsigned int, int> nclu_mod;
@@ -1021,7 +1016,6 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
   std::map<unsigned long int, int> npix_roc;
 
   edm::Handle<edmNew::DetSetVector<SiPixelCluster> > clusterCollectionHandle;
-//   iEvent.getByLabel(clusterColl, clusterCollectionHandle); //Tav tokens
   iEvent.getByToken(clusterColl, clusterCollectionHandle);
   
   if (clusterCollectionHandle.isValid()) {
@@ -1045,7 +1039,7 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
             DetId detId(itClusterSet->id());
       unsigned int subDetId=detId.subdetId();
          
-            if (DEBUG) std::cout << "Looping on the cluster sets ";
+            if (DEBUGClusters) std::cout << "Looping on the cluster sets ";
       // Take only pixel clusters
       if (subDetId!=PixelSubdetector::PixelEndcap && subDetId!=PixelSubdetector::PixelBarrel) {
               std::cout << "Not a pixel cluster";
@@ -1056,7 +1050,7 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
       edmNew::DetSet<SiPixelCluster>::const_iterator itCluster=itClusterSet->begin();
 
       for(; itCluster!=itClusterSet->end(); ++itCluster) {
-        if (DEBUG) std::cout << "Looping on the clusters in the set " << std::endl;
+        if (DEBUGClusters) std::cout << "Looping on the clusters in the set " << std::endl;
                 
         const Surface& surface = tracker->idToDet(detId)->surface();
 
@@ -1112,7 +1106,7 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
 
 
 
-        if (DEBUG) std::cout<<"\t#"<<clust.i<<" charge: "<<clust.charge<<" size: "<<clust.size<<std::endl;
+        if (DEBUGClusters) std::cout<<"\t#"<<clust.i<<" charge: "<<clust.charge<<" size: "<<clust.size<<std::endl;
 
         clust_.push_back(clust);
       }
