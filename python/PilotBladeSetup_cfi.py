@@ -6,6 +6,7 @@ from Configuration.StandardSequences.FrontierConditions_GlobalTag_cff import*
 
 import CalibTracker.Configuration.Common.PoolDBESSource_cfi
 # ----------------------- CONDITIONS -------------------
+
 # --------------------- SiPixelQuality -----------------
 SiPixelQualityDBReader = cms.ESSource("PoolDBESSource",
   BlobStreamerName = cms.untracked.string('TBufferBlobStreamingService'),
@@ -159,50 +160,50 @@ PoolDBESSourceGeometry = cms.ESSource("PoolDBESSource",
       record = cms.string('PTrackerParametersRcd'),
       tag = cms.string('TKParameters_Geometry_forPilotBlade_v1')
     ),
-    cms.PSet(
-      record = cms.string('PEcalBarrelRcd'),
-      tag = cms.string('EBRECO_Geometry_forPilotBlade_v1')
-    ),
-    cms.PSet(
-      record = cms.string('PEcalEndcapRcd'),
-      tag = cms.string('EERECO_Geometry_forPilotBlade_v1')
-    ),
-    cms.PSet(
-      record = cms.string('PEcalPreshowerRcd'),
-      tag = cms.string('EPRECO_Geometry_forPilotBlade_v1')
-    ),
-    cms.PSet(
-      record = cms.string('PHcalRcd'),
-      tag = cms.string('HCALRECO_Geometry_forPilotBlade_v1')
-    ),
-    cms.PSet(
-      record = cms.string('PCaloTowerRcd'),
-      tag = cms.string('CTRECO_Geometry_forPilotBlade_v1')
-    ),
-    cms.PSet(
-      record = cms.string('PZdcRcd'),
-      tag = cms.string('ZDCRECO_Geometry_forPilotBlade_v1')
-    ),
-    cms.PSet(
-      record = cms.string('PCastorRcd'),
-      tag = cms.string('CASTORRECO_Geometry_forPilotBlade_v1')
-    ),
-    cms.PSet(
-      record = cms.string('CSCRecoGeometryRcd'),
-      tag = cms.string('CSCRECO_Geometry_forPilotBlade_v1')
-    ),
-    cms.PSet(
-      record = cms.string('CSCRecoDigiParametersRcd'),
-      tag = cms.string('CSCRECODIGI_Geometry_forPilotBlade_v1')
-    ),
-    cms.PSet(
-      record = cms.string('DTRecoGeometryRcd'),
-      tag = cms.string('DTRECO_Geometry_forPilotBlade_v1')
-    ),
-    cms.PSet(
-      record = cms.string('RPCRecoGeometryRcd'),
-      tag = cms.string('RPCRECO_Geometry_forPilotBlade_v1')
-    )
+    #cms.PSet(
+    #  record = cms.string('PEcalBarrelRcd'),
+    #  tag = cms.string('EBRECO_Geometry_forPilotBlade_v1')
+    #),
+    #cms.PSet(
+      #record = cms.string('PEcalEndcapRcd'),
+      #tag = cms.string('EERECO_Geometry_forPilotBlade_v1')
+    #),
+    #cms.PSet(
+      #record = cms.string('PEcalPreshowerRcd'),
+      #tag = cms.string('EPRECO_Geometry_forPilotBlade_v1')
+    #),
+    #cms.PSet(
+      #record = cms.string('PHcalRcd'),
+      #tag = cms.string('HCALRECO_Geometry_forPilotBlade_v1')
+    #),
+    #cms.PSet(
+      #record = cms.string('PCaloTowerRcd'),
+      #tag = cms.string('CTRECO_Geometry_forPilotBlade_v1')
+    #),
+    #cms.PSet(
+      #record = cms.string('PZdcRcd'),
+      #tag = cms.string('ZDCRECO_Geometry_forPilotBlade_v1')
+    #),
+    #cms.PSet(
+      #record = cms.string('PCastorRcd'),
+      #tag = cms.string('CASTORRECO_Geometry_forPilotBlade_v1')
+    #),
+    #cms.PSet(
+      #record = cms.string('CSCRecoGeometryRcd'),
+      #tag = cms.string('CSCRECO_Geometry_forPilotBlade_v1')
+    #),
+    #cms.PSet(
+      #record = cms.string('CSCRecoDigiParametersRcd'),
+      #tag = cms.string('CSCRECODIGI_Geometry_forPilotBlade_v1')
+    #),
+    #cms.PSet(
+      #record = cms.string('DTRecoGeometryRcd'),
+      #tag = cms.string('DTRECO_Geometry_forPilotBlade_v1')
+    #),
+    #cms.PSet(
+      #record = cms.string('RPCRecoGeometryRcd'),
+      #tag = cms.string('RPCRECO_Geometry_forPilotBlade_v1')
+    #)
   )
 )
 es_prefer_geometry = cms.ESPrefer( "PoolDBESSource", "PoolDBESSourceGeometry" )
