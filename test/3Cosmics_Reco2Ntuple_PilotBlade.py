@@ -57,8 +57,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, '80X_dataRun2_Prompt_v1', '')
 process.load("RecoTracker.TrackProducer.TrackRefitters_cff")
 process.Refitter = process.TrackRefitterP5.clone()
 process.Refitter.src = 'ctfWithMaterialTracksP5'
-
-#process.Refitter.TrajectoryInEvent = True
+process.Refitter.TrajectoryInEvent = True
 #-------------------------------------------------------
 
 #------------------- PilotBladeStudy -------------------
