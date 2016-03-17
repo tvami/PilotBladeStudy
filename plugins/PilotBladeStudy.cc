@@ -99,169 +99,43 @@ void PilotBladeStudy::beginJob() {
   digiTree_->Branch("module", &digi.mod, digi.mod.list.data());
   digiTree_->Branch("module_on", &digi.mod_on, digi.mod_on.list.data());
 
-  // Get the configured WBC for each run
-  //265352 - 265394
-  wbc.insert (std::pair<size_t,int>(265352,167));
-  wbc.insert (std::pair<size_t,int>(265354,167));
-  wbc.insert (std::pair<size_t,int>(265356,167));
-  wbc.insert (std::pair<size_t,int>(265362,167));
-  wbc.insert (std::pair<size_t,int>(265363,167));
-  wbc.insert (std::pair<size_t,int>(265365,167));
-  wbc.insert (std::pair<size_t,int>(265366,167));
-  wbc.insert (std::pair<size_t,int>(265367,167));
-  wbc.insert (std::pair<size_t,int>(265368,167));
-  wbc.insert (std::pair<size_t,int>(265371,167));
-  wbc.insert (std::pair<size_t,int>(265372,167));
-  wbc.insert (std::pair<size_t,int>(265373,167));
-  wbc.insert (std::pair<size_t,int>(265374,167));
-  wbc.insert (std::pair<size_t,int>(265375,167));
-  wbc.insert (std::pair<size_t,int>(265377,167));
-  wbc.insert (std::pair<size_t,int>(265378,167));
-  wbc.insert (std::pair<size_t,int>(265379,167));
-  wbc.insert (std::pair<size_t,int>(265380,167));
-  wbc.insert (std::pair<size_t,int>(265381,167));
-  wbc.insert (std::pair<size_t,int>(265382,167));
-  wbc.insert (std::pair<size_t,int>(265383,167));
-  wbc.insert (std::pair<size_t,int>(265384,167));
-  wbc.insert (std::pair<size_t,int>(265385,167));
-  wbc.insert (std::pair<size_t,int>(265386,167));
-  wbc.insert (std::pair<size_t,int>(265388,167));
-  wbc.insert (std::pair<size_t,int>(265394,167));
-  // new wbc value: 265639-265655
-  wbc.insert (std::pair<size_t,int>(265639,168));
-  wbc.insert (std::pair<size_t,int>(265641,168));
-  wbc.insert (std::pair<size_t,int>(265645,168));
-  wbc.insert (std::pair<size_t,int>(265647,168));
-  wbc.insert (std::pair<size_t,int>(265648,168));
-  wbc.insert (std::pair<size_t,int>(265649,168));
-  wbc.insert (std::pair<size_t,int>(265651,168));
-  wbc.insert (std::pair<size_t,int>(265653,168));
-  wbc.insert (std::pair<size_t,int>(265655,168));
-  
-  // WBC 165: runs   266527-266556 
-  wbc.insert (std::pair<size_t,int>(266527,165));
-  wbc.insert (std::pair<size_t,int>(266528,165));
-  wbc.insert (std::pair<size_t,int>(266529,165));
-  wbc.insert (std::pair<size_t,int>(266530,165));
-  wbc.insert (std::pair<size_t,int>(266531,165));
-  wbc.insert (std::pair<size_t,int>(266532,165));
-  wbc.insert (std::pair<size_t,int>(266533,165));
-  wbc.insert (std::pair<size_t,int>(266534,165));
-  wbc.insert (std::pair<size_t,int>(266535,165));
-  wbc.insert (std::pair<size_t,int>(266536,165));
-  wbc.insert (std::pair<size_t,int>(266537,165));
-  wbc.insert (std::pair<size_t,int>(266538,165));
-  wbc.insert (std::pair<size_t,int>(266539,165));
-  wbc.insert (std::pair<size_t,int>(266540,165));
-  wbc.insert (std::pair<size_t,int>(266541,165));
-  wbc.insert (std::pair<size_t,int>(266542,165));
-  wbc.insert (std::pair<size_t,int>(266543,165));
-  wbc.insert (std::pair<size_t,int>(266544,165));
-  wbc.insert (std::pair<size_t,int>(266545,165));
-  wbc.insert (std::pair<size_t,int>(266546,165));
-  wbc.insert (std::pair<size_t,int>(266547,165));
-  wbc.insert (std::pair<size_t,int>(266548,165));
-  wbc.insert (std::pair<size_t,int>(266549,165));
-  wbc.insert (std::pair<size_t,int>(266550,165));
-  wbc.insert (std::pair<size_t,int>(266551,165));
-  wbc.insert (std::pair<size_t,int>(266552,165));
-  wbc.insert (std::pair<size_t,int>(266553,165));
-  wbc.insert (std::pair<size_t,int>(266554,165));
-  wbc.insert (std::pair<size_t,int>(266555,165));
-  wbc.insert (std::pair<size_t,int>(266556,165));
-// WBC 166: runs 266136- 266155 
-  wbc.insert (std::pair<size_t,int>(266136,166));
-  wbc.insert (std::pair<size_t,int>(266137,166));
-  wbc.insert (std::pair<size_t,int>(266138,166));
-  wbc.insert (std::pair<size_t,int>(266139,166));
-  wbc.insert (std::pair<size_t,int>(266140,166));
-  wbc.insert (std::pair<size_t,int>(266141,166));
-  wbc.insert (std::pair<size_t,int>(266142,166));
-  wbc.insert (std::pair<size_t,int>(266143,166));
-  wbc.insert (std::pair<size_t,int>(266144,166));
-  wbc.insert (std::pair<size_t,int>(266145,166));
-  wbc.insert (std::pair<size_t,int>(266146,166));
-  wbc.insert (std::pair<size_t,int>(266147,166));
-  wbc.insert (std::pair<size_t,int>(266148,166));
-  wbc.insert (std::pair<size_t,int>(266149,166));
-  wbc.insert (std::pair<size_t,int>(266150,166));
-  wbc.insert (std::pair<size_t,int>(266151,166));
-  wbc.insert (std::pair<size_t,int>(266152,166));
-  wbc.insert (std::pair<size_t,int>(266153,166));
-  wbc.insert (std::pair<size_t,int>(266154,166));
-  wbc.insert (std::pair<size_t,int>(266155,166));
-// WBC 167: runs 266271- 266278 
-  wbc.insert (std::pair<size_t,int>(266271,167));
-  wbc.insert (std::pair<size_t,int>(266272,167));
-  wbc.insert (std::pair<size_t,int>(266273,167));
-  wbc.insert (std::pair<size_t,int>(266274,167));
-  wbc.insert (std::pair<size_t,int>(266275,167));
-  wbc.insert (std::pair<size_t,int>(266276,167));
-  wbc.insert (std::pair<size_t,int>(266277,167));
-  wbc.insert (std::pair<size_t,int>(266278,167));
-// WBC 168: runs 266423- 266424 
-  wbc.insert (std::pair<size_t,int>(266423,168));
-  wbc.insert (std::pair<size_t,int>(266424,168));
-// WBC 169: runs 266665- 266684 
-  wbc.insert (std::pair<size_t,int>(266665,169));
-  wbc.insert (std::pair<size_t,int>(266666,169));
-  wbc.insert (std::pair<size_t,int>(266667,169));
-  wbc.insert (std::pair<size_t,int>(266668,169));
-  wbc.insert (std::pair<size_t,int>(266669,169));
-  wbc.insert (std::pair<size_t,int>(266670,169));
-  wbc.insert (std::pair<size_t,int>(266671,169));
-  wbc.insert (std::pair<size_t,int>(266672,169));
-  wbc.insert (std::pair<size_t,int>(266673,169));
-  wbc.insert (std::pair<size_t,int>(266674,169));
-  wbc.insert (std::pair<size_t,int>(266675,169));
-  wbc.insert (std::pair<size_t,int>(266676,169));
-  wbc.insert (std::pair<size_t,int>(266677,169));
-  wbc.insert (std::pair<size_t,int>(266678,169));
-  wbc.insert (std::pair<size_t,int>(266679,169));
-  wbc.insert (std::pair<size_t,int>(266680,169));
-  wbc.insert (std::pair<size_t,int>(266681,169));
-  wbc.insert (std::pair<size_t,int>(266682,169));
-  wbc.insert (std::pair<size_t,int>(266683,169));
-  wbc.insert (std::pair<size_t,int>(266684,169));
-
-  /*
-  std::cout << "\nReading Runs_and_dacs.txt\n";
-  std::ifstream runsndacs_file;
-  runsndacs_file.open ("Runs_and_dacs.txt", ifstream::in);
+  std::cout << "\nReading WBC setup file\n";
+  std::ifstream WBCSetup;
+  WBCSetup.open ("WBCSetup.txt", ifstream::in);
   int dac=NOVAL_I;
 
-  while (runsndacs_file.good()) {
+  while (WBCSetup.good()) {
     std::string var=""; 
-    runsndacs_file >> var;
-    std::cout << "Read " << var;
+    WBCSetup >> var;
+    //std::cout << "Read " << var;
 
     if (var.find(".log")!=std::string::npos) { // Reset wbc when reading a new log file
       dac=NOVAL_I;
       //std::cout << " - Reset wbc" << endl;
     } else if (var.find("WBC")!=std::string::npos) { // Read WBC
-      runsndacs_file >> dac;
+      WBCSetup >> dac;
       //std::cout << " - WBC set to " << dac << endl;
     } else if (var.find("dac")!=std::string::npos) { // Read dac
-      runsndacs_file >> dac;
+      WBCSetup >> dac;
       dac*=-1;
       //std::cout << " - WBC set to " << dac << endl;
     } else if (var.find("Run")!=std::string::npos) { // Read delay
       size_t run=0;
-      runsndacs_file >> run;
+      WBCSetup >> run;
       //std::cout << " - Run " << run;
 
       std::map<size_t,int>::iterator it=wbc.find(run);
       if (it==wbc.end()) {
 	wbc.insert(std::pair<size_t,int>(run, dac));
-	//std::cout << " new run, WBC " << dac << endl;
+	std::cout << " new run, WBC " << dac << endl;
       } else {
 	//if (it->second!=dac) std::cout << " old run with new WBC!!!";
 	//std::cout << std::endl;
       }
     }
   }
-  runsndacs_file.close();
-*/
+  WBCSetup.close();
+
 }
 
 // ------------------------------ endJob --------------------------------------
