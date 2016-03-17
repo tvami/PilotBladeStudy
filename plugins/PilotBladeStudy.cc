@@ -263,7 +263,7 @@ void PilotBladeStudy::endLuminosityBlock(edm::LuminosityBlock const& iLumi, edm:
 
 // -------------------------------- analyze -----------------------------------
 void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  bool DEBUG = true;
+  bool DEBUG = false;
   if (DEBUG) std::cout << "Processing the event " << std::endl;
   //beginLuminosityBlock
   if (isNewLS_==true) { // beginLuminosityBlock() was just called
