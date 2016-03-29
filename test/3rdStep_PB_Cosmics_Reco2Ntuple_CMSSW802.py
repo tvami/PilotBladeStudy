@@ -33,7 +33,12 @@ process.source = cms.Source("PoolSource",
       'file:/data/vami/projects/pilotBlade/2016CosmicsProcessing/RECOs/Cosmics_Raw2Reco_PilotBlade_WBC166.root',
       'file:/data/vami/projects/pilotBlade/2016CosmicsProcessing/RECOs/Cosmics_Raw2Reco_PilotBlade_WBC167.root',
       'file:/data/vami/projects/pilotBlade/2016CosmicsProcessing/RECOs/Cosmics_Raw2Reco_PilotBlade_WBC168.root',
-      'file:/data/vami/projects/pilotBlade/2016CosmicsProcessing/RECOs/Cosmics_Raw2Reco_PilotBlade_WBC169.root'),                
+      'file:/data/vami/projects/pilotBlade/2016CosmicsProcessing/RECOs/Cosmics_Raw2Reco_PilotBlade_WBC169.root',
+      'file:/data/vami/projects/pilotBlade/2016CosmicsProcessing/RECOs/Cosmics_Raw2Reco_PilotBlade_March21.root',
+      'file:/data/vami/projects/pilotBlade/2016CosmicsProcessing/RECOs/Cosmics_Raw2Reco_PilotBlade_March22.root',
+      'file:/data/vami/projects/pilotBlade/2016CosmicsProcessing/RECOs/Cosmics_Raw2Reco_PilotBlade_March23.root',
+                        
+      ),                
     secondaryFileNames = cms.untracked.vstring()
 )
 
