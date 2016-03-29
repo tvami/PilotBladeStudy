@@ -8,13 +8,14 @@ using namespace reco;
 
 // ------------------------- Constructor & Destructor  ------------------------
 PilotBladeStudy::PilotBladeStudy(edm::ParameterSet const& iConfig) : iConfig_(iConfig) {
-  eventTree_=NULL;
-  lumiTree_=NULL;
-  runTree_=NULL;
-  trajTree_=NULL;
-  clustTree_=NULL;
-  digiTree_=NULL;
-  outfile_=NULL;
+  eventTree_= NULL;
+  lumiTree_ = NULL;
+  runTree_  = NULL;
+  trackTree_= NULL;
+  trajTree_ = NULL;
+  clustTree_= NULL;
+  digiTree_ = NULL;
+  outfile_  = NULL;
   
   usePixelCPE_=false;
   
@@ -59,19 +60,26 @@ void PilotBladeStudy::beginJob() {
   std::cout<<"Output file created: "<<outfile_->GetName()<<std::endl;
   
   EventData         evt_;
+  Digi		    digi;
   Cluster           clust;
+  TrackData 	    track_;
   TrajMeasurement   trajmeas;
-  Digi digi;
+
   
   eventTree_ = new TTree("eventTree", "The event");
   eventTree_->Branch("event",     &evt_,            evt_.list.data());
   
-  // The lumi
+  runTree_ = new TTree("runTree", "The run");
+  runTree_->Branch("run", &run_, run_.list.data());
+
   lumiTree_ = new TTree("lumiTree", "The lumi");
   lumiTree_->Branch("lumi", &lumi_, lumi_.list.data());
 
-  runTree_ = new TTree("runTree", "The run");
-  runTree_->Branch("run", &run_, run_.list.data());
+  digiTree_ = new TTree("digiTree", "Pixel digis");
+  digiTree_->Branch("event", &evt_, evt_.list.data());
+  digiTree_->Branch("digi", &digi, digi.list.data());
+  digiTree_->Branch("module", &digi.mod, digi.mod.list.data());
+  digiTree_->Branch("module_on", &digi.mod_on, digi.mod_on.list.data());
   
   clustTree_ = new TTree("clustTree", "Pixel clusters in the event");
   clustTree_->Branch("event",       &evt_,            evt_.list.data());
@@ -81,6 +89,10 @@ void PilotBladeStudy::beginJob() {
   clustTree_->Branch("module",      &clust.mod,       clust.mod.list.data());
   clustTree_->Branch("module_on",   &clust.mod_on,    clust.mod_on.list.data());
 
+  trackTree_ = new TTree("trackTree", "The track in the event");
+  trackTree_->Branch("event", &evt_, evt_.list.data());
+  trackTree_->Branch("track", &track_, track_.list.data());
+  
   
   trajTree_ = new TTree("trajTree", "The trajectory measurements in the event");
   trajTree_->Branch("event",        &evt_,              evt_.list.data());
@@ -91,14 +103,7 @@ void PilotBladeStudy::beginJob() {
   trajTree_->Branch("clust_pixY",   &trajmeas.clu.pixY, "pixY[size]/F");
   trajTree_->Branch("module",       &trajmeas.mod,      trajmeas.mod.list.data());
   trajTree_->Branch("module_on",    &trajmeas.mod_on,   trajmeas.mod_on.list.data());
-
-
-  digiTree_ = new TTree("digiTree", "Pixel digis");
-  digiTree_->Branch("event", &evt_, evt_.list.data());
-  digiTree_->Branch("digi", &digi, digi.list.data());
-  digiTree_->Branch("module", &digi.mod, digi.mod.list.data());
-  digiTree_->Branch("module_on", &digi.mod_on, digi.mod_on.list.data());
-
+/*
   std::cout << "\nReading WBC setup file\n";
   std::ifstream WBCSetup;
   WBCSetup.open ("WBCSetup.txt", ifstream::in);
@@ -135,7 +140,237 @@ void PilotBladeStudy::beginJob() {
     }
   }
   WBCSetup.close();
-
+*/
+  //std::map<size_t,int> wbc;
+  wbc.insert(std::pair<size_t,int>(265352,167)); 
+  wbc.insert(std::pair<size_t,int>(265354,167)); 
+  wbc.insert(std::pair<size_t,int>(265356,167)); 
+  wbc.insert(std::pair<size_t,int>(265362,167)); 
+  wbc.insert(std::pair<size_t,int>(265363,167)); 
+  wbc.insert(std::pair<size_t,int>(265365,167)); 
+  wbc.insert(std::pair<size_t,int>(265366,167)); 
+  wbc.insert(std::pair<size_t,int>(265367,167)); 
+  wbc.insert(std::pair<size_t,int>(265368,167)); 
+  wbc.insert(std::pair<size_t,int>(265371,167)); 
+  wbc.insert(std::pair<size_t,int>(265372,167)); 
+  wbc.insert(std::pair<size_t,int>(265373,167)); 
+  wbc.insert(std::pair<size_t,int>(265374,167)); 
+  wbc.insert(std::pair<size_t,int>(265375,167)); 
+  wbc.insert(std::pair<size_t,int>(265377,167)); 
+  wbc.insert(std::pair<size_t,int>(265378,167)); 
+  wbc.insert(std::pair<size_t,int>(265379,167)); 
+  wbc.insert(std::pair<size_t,int>(265380,167)); 
+  wbc.insert(std::pair<size_t,int>(265381,167)); 
+  wbc.insert(std::pair<size_t,int>(265382,167)); 
+  wbc.insert(std::pair<size_t,int>(265383,167)); 
+  wbc.insert(std::pair<size_t,int>(265384,167)); 
+  wbc.insert(std::pair<size_t,int>(265385,167)); 
+  wbc.insert(std::pair<size_t,int>(265386,167)); 
+  wbc.insert(std::pair<size_t,int>(265388,167)); 
+  wbc.insert(std::pair<size_t,int>(265394,167)); 
+  wbc.insert(std::pair<size_t,int>(265639,168)); 
+  wbc.insert(std::pair<size_t,int>(265641,168)); 
+  wbc.insert(std::pair<size_t,int>(265645,168)); 
+  wbc.insert(std::pair<size_t,int>(265647,168)); 
+  wbc.insert(std::pair<size_t,int>(265648,168)); 
+  wbc.insert(std::pair<size_t,int>(265649,168)); 
+  wbc.insert(std::pair<size_t,int>(265651,168)); 
+  wbc.insert(std::pair<size_t,int>(265653,168)); 
+  wbc.insert(std::pair<size_t,int>(265655,168)); 
+  wbc.insert(std::pair<size_t,int>(266527,165)); 
+  wbc.insert(std::pair<size_t,int>(266528,165)); 
+  wbc.insert(std::pair<size_t,int>(266529,165)); 
+  wbc.insert(std::pair<size_t,int>(266530,165)); 
+  wbc.insert(std::pair<size_t,int>(266531,165)); 
+  wbc.insert(std::pair<size_t,int>(266532,165)); 
+  wbc.insert(std::pair<size_t,int>(266533,165)); 
+  wbc.insert(std::pair<size_t,int>(266534,165)); 
+  wbc.insert(std::pair<size_t,int>(266535,165)); 
+  wbc.insert(std::pair<size_t,int>(266536,165)); 
+  wbc.insert(std::pair<size_t,int>(266537,165)); 
+  wbc.insert(std::pair<size_t,int>(266538,165)); 
+  wbc.insert(std::pair<size_t,int>(266539,165)); 
+  wbc.insert(std::pair<size_t,int>(266540,165)); 
+  wbc.insert(std::pair<size_t,int>(266541,165)); 
+  wbc.insert(std::pair<size_t,int>(266542,165)); 
+  wbc.insert(std::pair<size_t,int>(266543,165)); 
+  wbc.insert(std::pair<size_t,int>(266544,165)); 
+  wbc.insert(std::pair<size_t,int>(266545,165)); 
+  wbc.insert(std::pair<size_t,int>(266546,165)); 
+  wbc.insert(std::pair<size_t,int>(266547,165)); 
+  wbc.insert(std::pair<size_t,int>(266548,165)); 
+  wbc.insert(std::pair<size_t,int>(266549,165)); 
+  wbc.insert(std::pair<size_t,int>(266550,165)); 
+  wbc.insert(std::pair<size_t,int>(266551,165)); 
+  wbc.insert(std::pair<size_t,int>(266552,165)); 
+  wbc.insert(std::pair<size_t,int>(266553,165)); 
+  wbc.insert(std::pair<size_t,int>(266554,165)); 
+  wbc.insert(std::pair<size_t,int>(266555,165)); 
+  wbc.insert(std::pair<size_t,int>(266556,165)); 
+  wbc.insert(std::pair<size_t,int>(266136,166)); 
+  wbc.insert(std::pair<size_t,int>(266137,166)); 
+  wbc.insert(std::pair<size_t,int>(266138,166)); 
+  wbc.insert(std::pair<size_t,int>(266139,166)); 
+  wbc.insert(std::pair<size_t,int>(266140,166)); 
+  wbc.insert(std::pair<size_t,int>(266141,166)); 
+  wbc.insert(std::pair<size_t,int>(266142,166)); 
+  wbc.insert(std::pair<size_t,int>(266143,166)); 
+  wbc.insert(std::pair<size_t,int>(266144,166)); 
+  wbc.insert(std::pair<size_t,int>(266145,166)); 
+  wbc.insert(std::pair<size_t,int>(266146,166)); 
+  wbc.insert(std::pair<size_t,int>(266147,166)); 
+  wbc.insert(std::pair<size_t,int>(266148,166)); 
+  wbc.insert(std::pair<size_t,int>(266149,166)); 
+  wbc.insert(std::pair<size_t,int>(266150,166)); 
+  wbc.insert(std::pair<size_t,int>(266151,166)); 
+  wbc.insert(std::pair<size_t,int>(266152,166)); 
+  wbc.insert(std::pair<size_t,int>(266153,166)); 
+  wbc.insert(std::pair<size_t,int>(266154,166)); 
+  wbc.insert(std::pair<size_t,int>(266155,166)); 
+  wbc.insert(std::pair<size_t,int>(266271,167)); 
+  wbc.insert(std::pair<size_t,int>(266272,167)); 
+  wbc.insert(std::pair<size_t,int>(266273,167)); 
+  wbc.insert(std::pair<size_t,int>(266274,167)); 
+  wbc.insert(std::pair<size_t,int>(266275,167)); 
+  wbc.insert(std::pair<size_t,int>(266276,167)); 
+  wbc.insert(std::pair<size_t,int>(266277,167)); 
+  wbc.insert(std::pair<size_t,int>(266278,167)); 
+  wbc.insert(std::pair<size_t,int>(266423,168)); 
+  wbc.insert(std::pair<size_t,int>(266424,168)); 
+  wbc.insert(std::pair<size_t,int>(266665,169)); 
+  wbc.insert(std::pair<size_t,int>(266666,169)); 
+  wbc.insert(std::pair<size_t,int>(266667,169)); 
+  wbc.insert(std::pair<size_t,int>(266668,169)); 
+  wbc.insert(std::pair<size_t,int>(266669,169)); 
+  wbc.insert(std::pair<size_t,int>(266670,169)); 
+  wbc.insert(std::pair<size_t,int>(266671,169)); 
+  wbc.insert(std::pair<size_t,int>(266672,169)); 
+  wbc.insert(std::pair<size_t,int>(266673,169)); 
+  wbc.insert(std::pair<size_t,int>(266674,169)); 
+  wbc.insert(std::pair<size_t,int>(266675,169)); 
+  wbc.insert(std::pair<size_t,int>(266676,169)); 
+  wbc.insert(std::pair<size_t,int>(266677,169)); 
+  wbc.insert(std::pair<size_t,int>(266678,169)); 
+  wbc.insert(std::pair<size_t,int>(266679,169)); 
+  wbc.insert(std::pair<size_t,int>(266680,169)); 
+  wbc.insert(std::pair<size_t,int>(266681,169)); 
+  wbc.insert(std::pair<size_t,int>(266682,169)); 
+  wbc.insert(std::pair<size_t,int>(266683,169)); 
+  wbc.insert(std::pair<size_t,int>(266684,169)); 
+  wbc.insert(std::pair<size_t,int>(267323,168)); 
+  wbc.insert(std::pair<size_t,int>(267329,168)); 
+  wbc.insert(std::pair<size_t,int>(267330,168)); 
+  wbc.insert(std::pair<size_t,int>(267335,168)); 
+  wbc.insert(std::pair<size_t,int>(267337,168)); 
+  wbc.insert(std::pair<size_t,int>(267341,168)); 
+  wbc.insert(std::pair<size_t,int>(267349,168)); 
+  wbc.insert(std::pair<size_t,int>(267354,168)); 
+  wbc.insert(std::pair<size_t,int>(267356,168)); 
+  wbc.insert(std::pair<size_t,int>(267357,168)); 
+  wbc.insert(std::pair<size_t,int>(267362,168)); 
+  wbc.insert(std::pair<size_t,int>(267363,168)); 
+  wbc.insert(std::pair<size_t,int>(267364,168)); 
+  wbc.insert(std::pair<size_t,int>(267367,168)); 
+  wbc.insert(std::pair<size_t,int>(267368,168)); 
+  wbc.insert(std::pair<size_t,int>(267370,168)); 
+  wbc.insert(std::pair<size_t,int>(267371,168)); 
+  wbc.insert(std::pair<size_t,int>(267372,168)); 
+  wbc.insert(std::pair<size_t,int>(267373,168)); 
+  wbc.insert(std::pair<size_t,int>(267374,168)); 
+  wbc.insert(std::pair<size_t,int>(267375,168)); 
+  wbc.insert(std::pair<size_t,int>(267376,168)); 
+  wbc.insert(std::pair<size_t,int>(267377,168)); 
+  wbc.insert(std::pair<size_t,int>(267380,168)); 
+  wbc.insert(std::pair<size_t,int>(267382,168)); 
+  wbc.insert(std::pair<size_t,int>(267389,168)); 
+  wbc.insert(std::pair<size_t,int>(267391,168)); 
+  wbc.insert(std::pair<size_t,int>(267403,168));
+  wbc.insert(std::pair<size_t,int>(267410,168));
+  wbc.insert(std::pair<size_t,int>(267414,168));
+  wbc.insert(std::pair<size_t,int>(267417,168));
+  wbc.insert(std::pair<size_t,int>(267431,168));
+  wbc.insert(std::pair<size_t,int>(267444,168));
+  wbc.insert(std::pair<size_t,int>(267446,168));
+  wbc.insert(std::pair<size_t,int>(267461,168));
+  wbc.insert(std::pair<size_t,int>(267462,168));
+  wbc.insert(std::pair<size_t,int>(267473,168));
+  wbc.insert(std::pair<size_t,int>(267499,168));
+  wbc.insert(std::pair<size_t,int>(267510,168));
+  wbc.insert(std::pair<size_t,int>(267513,168));
+  wbc.insert(std::pair<size_t,int>(267533,168));
+  wbc.insert(std::pair<size_t,int>(267537,168));
+  wbc.insert(std::pair<size_t,int>(267543,168));
+  wbc.insert(std::pair<size_t,int>(267552,168));
+  wbc.insert(std::pair<size_t,int>(267558,168));
+  wbc.insert(std::pair<size_t,int>(267565,168));
+  wbc.insert(std::pair<size_t,int>(267567,168));
+  wbc.insert(std::pair<size_t,int>(267579,168));
+  wbc.insert(std::pair<size_t,int>(267580,168));
+  wbc.insert(std::pair<size_t,int>(267582,168));
+  wbc.insert(std::pair<size_t,int>(267586,168));
+  wbc.insert(std::pair<size_t,int>(267587,168));
+  wbc.insert(std::pair<size_t,int>(267588,168));
+  wbc.insert(std::pair<size_t,int>(267589,168));
+  wbc.insert(std::pair<size_t,int>(267590,168));
+  wbc.insert(std::pair<size_t,int>(267591,168));
+  wbc.insert(std::pair<size_t,int>(267593,168));
+  wbc.insert(std::pair<size_t,int>(267594,168));
+  wbc.insert(std::pair<size_t,int>(267595,168));
+  wbc.insert(std::pair<size_t,int>(267597,168));
+  wbc.insert(std::pair<size_t,int>(267598,168));
+  //March23
+  wbc.insert(std::pair<size_t,int>(267599,168)); 
+  wbc.insert(std::pair<size_t,int>(267600,168)); 
+  wbc.insert(std::pair<size_t,int>(267602,168)); 
+  wbc.insert(std::pair<size_t,int>(267603,168)); 
+  wbc.insert(std::pair<size_t,int>(267697,168)); 
+  wbc.insert(std::pair<size_t,int>(267708,168)); 
+  wbc.insert(std::pair<size_t,int>(267712,168)); 
+  wbc.insert(std::pair<size_t,int>(267713,168)); 
+  wbc.insert(std::pair<size_t,int>(267716,168)); 
+  wbc.insert(std::pair<size_t,int>(267722,168)); 
+  wbc.insert(std::pair<size_t,int>(267726,168)); 
+  wbc.insert(std::pair<size_t,int>(267727,168)); 
+  wbc.insert(std::pair<size_t,int>(267729,168)); 
+  wbc.insert(std::pair<size_t,int>(267732,168)); 
+  wbc.insert(std::pair<size_t,int>(267742,168)); 
+  wbc.insert(std::pair<size_t,int>(267744,168)); 
+  wbc.insert(std::pair<size_t,int>(267748,168)); 
+  wbc.insert(std::pair<size_t,int>(267749,168)); 
+  wbc.insert(std::pair<size_t,int>(267750,168)); 
+  wbc.insert(std::pair<size_t,int>(267754,168)); 
+  wbc.insert(std::pair<size_t,int>(267755,168)); 
+  wbc.insert(std::pair<size_t,int>(267756,168)); 
+  wbc.insert(std::pair<size_t,int>(267757,168)); 
+  wbc.insert(std::pair<size_t,int>(267758,168)); 
+  wbc.insert(std::pair<size_t,int>(267759,168)); 
+  wbc.insert(std::pair<size_t,int>(267760,168)); 
+  wbc.insert(std::pair<size_t,int>(267761,168)); 
+  wbc.insert(std::pair<size_t,int>(267767,168)); 
+  wbc.insert(std::pair<size_t,int>(267779,168)); 
+  wbc.insert(std::pair<size_t,int>(267780,168)); 
+  wbc.insert(std::pair<size_t,int>(267781,168)); 
+  wbc.insert(std::pair<size_t,int>(267782,168)); 
+  wbc.insert(std::pair<size_t,int>(267783,168)); 
+  wbc.insert(std::pair<size_t,int>(267784,168)); 
+  wbc.insert(std::pair<size_t,int>(267785,168)); 
+  wbc.insert(std::pair<size_t,int>(267786,168)); 
+  wbc.insert(std::pair<size_t,int>(267787,168)); 
+  wbc.insert(std::pair<size_t,int>(267788,168)); 
+  wbc.insert(std::pair<size_t,int>(267789,168)); 
+  wbc.insert(std::pair<size_t,int>(267792,168)); 
+  wbc.insert(std::pair<size_t,int>(267794,168)); 
+  wbc.insert(std::pair<size_t,int>(267795,168)); 
+  wbc.insert(std::pair<size_t,int>(267798,168)); 
+  wbc.insert(std::pair<size_t,int>(267800,168)); 
+  wbc.insert(std::pair<size_t,int>(267803,168)); 
+  wbc.insert(std::pair<size_t,int>(267859,168)); 
+  wbc.insert(std::pair<size_t,int>(267872,168)); 
+  wbc.insert(std::pair<size_t,int>(267876,168)); 
+  wbc.insert(std::pair<size_t,int>(267877,168)); 
+  wbc.insert(std::pair<size_t,int>(267878,168)); 
+  wbc.insert(std::pair<size_t,int>(267890,168)); 
+  
 }
 
 // ------------------------------ endJob --------------------------------------
@@ -414,9 +649,9 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
         TrajMeasurement meas;
         
         TransientTrackingRecHit::ConstRecHitPointer recHit = itTraj->recHit();
-        if(recHit->geographicalId().det() != DetId::Tracker) continue;
+        //if(recHit->geographicalId().det() != DetId::Tracker) continue; //CosmicsCase
         
-        unsigned int DetID    = recHit->geographicalId();
+        //unsigned int DetID    = recHit->geographicalId();
         unsigned int SubDetID = recHit->geographicalId().subdetId();
 
         //const Surface& surface = tracker->idToDet(recHit->geographicalId())->surface();
@@ -435,19 +670,19 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
          std::cout << "detector ID: " << SubDetID << std::endl; //Debug
         //Strip detector
         if(SubDetID == 3 || SubDetID == 4 || SubDetID == 5 ||SubDetID == 6 ) {
-          //std::cout << " Hit found on the Strip detector" << std::endl;
-          continue;
+          std::cout << " Hit found on the Strip detector" << std::endl;
+          //continue; //CosmicsCase
         }
 #ifdef COMPLETE        
         //Pixel Barrel and the Forward detector
         
-        if( SubDetID == PixelSubdetector::PixelBarrel ||  SubDetID == PixelSubdetector::PixelEndcap  ) {
+        //if( SubDetID == PixelSubdetector::PixelBarrel ||  SubDetID == PixelSubdetector::PixelEndcap  ) {
 #else     
-        if( SubDetID == PixelSubdetector::PixelBarrel ) {
-          continue;
-        }  
+        //if( SubDetID == PixelSubdetector::PixelBarrel ) {
+          //continue; //CosmicsCase
+        //}  
         //Pixel Forward detector
-        else if ( SubDetID == PixelSubdetector::PixelEndcap ) {
+        //else if ( SubDetID == PixelSubdetector::PixelEndcap ) {
 #endif
           //std::cout << " Hit found on the FPIX detector" << std::endl;
           std::cout << "detector ID still: " << SubDetID << std::endl; //Debug
@@ -576,9 +811,9 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
           } //if FPix not PB
           
           trajmeas.push_back(meas);                              
-        } else {
-          std::cout << " Nor BIX, nor FPIX, nor Strip, DetID: " << DetID << std::endl;
-        }        
+        //} else {
+        //  std::cout << " Nor BIX, nor FPIX, nor Strip, DetID: " << DetID << std::endl;
+        //}        
       }
       // ------------------- end of loop on the trajMeasurements --------------------
       tracks_.push_back(track_);
@@ -593,6 +828,14 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   // ----------------------- start of filling the trajTree -----------------------
   eventTree_->SetBranchAddress("event", &evt_);
   eventTree_->Fill();
+  
+  TrackData trk;
+  trackTree_->SetBranchAddress("event", &evt_);
+  trackTree_->SetBranchAddress("track", &trk);
+  for (size_t i=0; i<tracks_.size(); i++) {
+    trk = tracks_[i];
+    trackTree_->Fill();
+  }
   
   TrajMeasurement traj;
   trajTree_->SetBranchAddress("event",      &evt_);
@@ -801,13 +1044,13 @@ void PilotBladeStudy::analyzeDigis(const edm::Event& iEvent,
       // in case we want to save the barrel and fpix digis too
       if (subDetId!=PixelSubdetector::PixelEndcap && subDetId!=PixelSubdetector::PixelBarrel) {
         std::cout << "Not a pixel digi";
-        continue;
+        //continue; //CosmicsCase
       }
 #else
       // Take only the FPIX pixel digis
       if (subDetId!=PixelSubdetector::PixelEndcap) {
         std::cout << "Not a FPIX digi";
-        continue;
+        //continue; //CosmicsCase
       }
 #endif
       //edm::DetSet<PixelDigi>::const_iterator itDigi=itDigiSet->begin();
@@ -892,7 +1135,7 @@ void PilotBladeStudy::findClosestClusters(
     if (subDetId!=PixelSubdetector::PixelBarrel &&
   subDetId!=PixelSubdetector::PixelEndcap) {
       std::cout << "ERROR: not a pixel cluster!!!" << std::endl; 
-      continue;
+      //continue; //CosmicsCase
     }
     
     const PixelGeomDetUnit *pixdet = (const PixelGeomDetUnit*) tkgeom->idToDetUnit(detId);
@@ -1002,7 +1245,7 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
       // Take only pixel clusters
       if (subDetId!=PixelSubdetector::PixelEndcap && subDetId!=PixelSubdetector::PixelBarrel) {
               std::cout << "Not a pixel cluster";
-              continue;
+              //continue; //CosmicsCase
       }
       
       const PixelGeomDetUnit *pixdet = (const PixelGeomDetUnit*) tkgeom->idToDetUnit(detId);
@@ -1123,5 +1366,4 @@ int PilotBladeStudy::get_RocID_from_local_coords(const float& lx, const float& l
   || DetID == 344133124 || DetID == 344134148 )
 */
 DEFINE_FWK_MODULE(PilotBladeStudy);
-
 
