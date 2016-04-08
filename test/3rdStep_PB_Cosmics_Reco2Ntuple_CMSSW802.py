@@ -21,7 +21,7 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('DPGAnalysis.PilotBladeStudy.PilotBladeSetup_cfi')
 
 # ------------------- Input ----------------------------
-nEvents =  'test'
+nEvents =  '2016CRUZET_All'
 
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(-1)
@@ -36,7 +36,7 @@ process.source = cms.Source("PoolSource",
       'file:/data/vami/projects/pilotBlade/2016CosmicsProcessing/RECOs/Cosmics_Raw2Reco_PilotBlade_WBC169.root',
       'file:/data/vami/projects/pilotBlade/2016CosmicsProcessing/RECOs/Cosmics_Raw2Reco_PilotBlade_March21.root',
       'file:/data/vami/projects/pilotBlade/2016CosmicsProcessing/RECOs/Cosmics_Raw2Reco_PilotBlade_March22.root',
-      'file:/data/vami/projects/pilotBlade/2016CosmicsProcessing/RECOs/Cosmics_Raw2Reco_PilotBlade_March23.root',
+      'file:/data/vami/projects/pilotBlade/2016CosmicsProcessing/RECOs/Cosmics_Raw2Reco_PilotBlade_March23_v2.root',
                         
       ),                
     secondaryFileNames = cms.untracked.vstring()
