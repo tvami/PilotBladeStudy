@@ -483,12 +483,10 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   evt_.bx=iEvent.bunchCrossing();
   evt_.evt=iEvent.id().event();
 
-
   evt_.wbc=wbc[iEvent.id().run()];
   //evt_.delay=globaldelay[iEvent.id().run()]; // run && LS kent kene nem run szerint //kesobb
 
   // Read FED error info
-  
   std::map<uint32_t, int> federrors;
   int federr[16];
   for (int i=0; i<16; i++) federr[i]=0;
@@ -567,13 +565,13 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     }
   } 
   
-  // Analyze digis
+  // -------------------------------------------------------------
+  // ----------------------- Analyze digis -----------------------
   analyzeDigis(iEvent, iSetup, tok_siPixelDigis_, federrors);
   analyzeDigis(iEvent, iSetup, tok_PBDigis_, federrors); 
-
-
-  // Analyze clusters
   
+  // ---------------------------------------------------------------
+  // ----------------------- Analyze clusters ----------------------
   std::map<unsigned int, int> nclu_mod;
   std::map<unsigned int, int> npix_mod;
   std::map<unsigned long int, int> nclu_roc;
@@ -582,32 +580,8 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   analyzeClusters(iEvent, iSetup, tok_siPixelClusters_, federrors); 
   analyzeClusters(iEvent, iSetup, tok_PBClusters_, federrors);
 
-  // ----------------------- start of filling the clusTree -----------------------
-  eventTree_->SetBranchAddress("event", &evt_);
-  eventTree_->Fill();
-  
-//  Cluster cluster;
-//  makes a crash
-//   clustTree_->SetBranchAddress("clusters", &cluster);
-//   clustTree_->SetBranchAddress("module", &cluster.mod);
-//   clustTree_->SetBranchAddress("clust_pix", &cluster.pix);
-//   clustTree_->SetBranchAddress("module_on", &cluster.mod_on);
-//   
-//   for (size_t i=0; i<clust_.size(); i++) {
-//     cluster = clust_[i];
-//     clustTree_->Fill();
-//   }
-  
-  clustTree_->SetBranchAddress("event", &evt_);
-  for (size_t i=0; i<clust_.size(); i++) {
-    clustTree_->SetBranchAddress("clusters", &clust_[i]);
-    clustTree_->SetBranchAddress("clust_pixX", &clust_[i].pixX);
-    clustTree_->SetBranchAddress("clust_pixY", &clust_[i].pixY);
-    clustTree_->SetBranchAddress("module", &clust_[i].mod);
-    clustTree_->SetBranchAddress("module_on", &clust_[i].mod_on);
-    clustTree_->Fill();
-  }
-
+  // ---------------------------------------------------------------
+  // ------------------------ Analyze tracks -----------------------
     // Read track info
   edm::Handle<TrajTrackAssociationCollection> trajTrackCollectionHandle;
   iEvent.getByToken(trajTrackCollToken_, trajTrackCollectionHandle);
@@ -663,13 +637,13 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
         // Hit type codes: valid = 0, missing = 1, inactive = 2
         
         if (recHit->getType() == TrackingRecHit::valid) {
-           meas.type=0;
-         } else if (recHit->getType() == TrackingRecHit::missing) {
-           meas.type=1;
-         } else if (recHit->getType() == TrackingRecHit::inactive) {
-           meas.type=2;
-         }
-         std::cout << "detector ID: " << SubDetID << std::endl; //Debug
+          meas.type=0;
+        } else if (recHit->getType() == TrackingRecHit::missing) {
+          meas.type=1;
+        } else if (recHit->getType() == TrackingRecHit::inactive) {
+          meas.type=2;
+        }
+        std::cout << "detector ID: " << SubDetID << std::endl; //Debug
         //Strip detector
         if(SubDetID == 3 || SubDetID == 4 || SubDetID == 5 ||SubDetID == 6 ) {
           std::cout << " Hit found on the Strip detector" << std::endl;
@@ -809,7 +783,6 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
         meas.norm_charge = meas.clu.charge*
     sqrt(1.0/(1.0/pow(tan(meas.alpha),2)+1.0/pow(tan(meas.beta),2)+1.0));
       }
-      
           } //if FPix not PB
           
           trajmeas.push_back(meas);                              
@@ -827,10 +800,39 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   std::cout << "Number of PB Hits: " << nPBHits << " out of " 
       << nHits << " in the events so far. "<<std::endl;
   
-  // ----------------------- start of filling the trajTree -----------------------
+  // ---------------------------------------------------------------
+  // ---------------------- Filling the trees ----------------------
   eventTree_->SetBranchAddress("event", &evt_);
   eventTree_->Fill();
+
+  // fill the digiTree
+  Digi dig;
+  digiTree_->SetBranchAddress("event", &evt_);
+  digiTree_->SetBranchAddress("digi", &dig);
+  digiTree_->SetBranchAddress("module", &dig.mod);
+  digiTree_->SetBranchAddress("module_on", &dig.mod_on);
+  for (size_t i=0; i<digis_.size(); i++) {
+    dig = digis_[i];
+    digiTree_->Fill();
+  }
   
+//  the following looks nicer but makes a crash
+//   clustTree_->SetBranchAddress("clusters", &cluster); //   clustTree_->SetBranchAddress("module", &cluster.mod);
+//   clustTree_->SetBranchAddress("clust_pix", &cluster.pix); //   clustTree_->SetBranchAddress("module_on", &cluster.mod_on);
+//   for (size_t i=0; i<clust_.size(); i++) { //     cluster = clust_[i]; //     clustTree_->Fill(); //   }
+  
+// fill the clustTree
+  clustTree_->SetBranchAddress("event", &evt_);
+  for (size_t i=0; i<clust_.size(); i++) {
+    clustTree_->SetBranchAddress("clusters", &clust_[i]);
+    clustTree_->SetBranchAddress("clust_pixX", &clust_[i].pixX);
+    clustTree_->SetBranchAddress("clust_pixY", &clust_[i].pixY);
+    clustTree_->SetBranchAddress("module", &clust_[i].mod);
+    clustTree_->SetBranchAddress("module_on", &clust_[i].mod_on);
+    clustTree_->Fill();
+  }
+
+  // fill the trackTree
   TrackData trk;
   trackTree_->SetBranchAddress("event", &evt_);
   trackTree_->SetBranchAddress("track", &trk);
@@ -839,6 +841,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     trackTree_->Fill();
   }
   
+  // fill the trajTree
   TrajMeasurement traj;
   trajTree_->SetBranchAddress("event",      &evt_);
   trajTree_->SetBranchAddress("traj",       &traj);
@@ -883,16 +886,6 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       traj = trajmeas_[itrk][i];
       trajTree_->Fill();
     }
-  }
-
-  Digi dig;
-  digiTree_->SetBranchAddress("event", &evt_);
-  digiTree_->SetBranchAddress("digi", &dig);
-  digiTree_->SetBranchAddress("module", &dig.mod);
-  digiTree_->SetBranchAddress("module_on", &dig.mod_on);
-  for (size_t i=0; i<digis_.size(); i++) {
-    dig = digis_[i];
-    digiTree_->Fill();
   }
   // ----------------------- end of filling the trajTree ------------------------
 }//end of analyzer
@@ -1024,16 +1017,13 @@ void PilotBladeStudy::analyzeDigis(const edm::Event& iEvent,
                                      ) {
   bool DEBUG = false;
   
-//edm::Handle<edm::DetSetVector<PixelDigi> > digiCollectionHandle;
   edm::Handle<edm::DetSetVector<PixelDigi> > digiCollectionHandle;
   iEvent.getByToken(digiColl, digiCollectionHandle);
   
   if (digiCollectionHandle.isValid()) {
   const edm::DetSetVector<PixelDigi>& digiCollection = *digiCollectionHandle;
   edm::DetSetVector<PixelDigi>::const_iterator itDigiSet =  digiCollection.begin();
-  //const edm::DetSetVector<PixelDigi>& digiCollection = *digiCollectionHandle;
-  //edm::DetSetVector<PixelDigi>::const_iterator itDigiSet = digiCollection.begin();
-  // not sure whether to use the edmNew or not...
+
     for (; itDigiSet!=digiCollection.end(); itDigiSet++) {
       DetId detId(itDigiSet->detId());
       unsigned int subDetId=detId.subdetId();
@@ -1055,7 +1045,6 @@ void PilotBladeStudy::analyzeDigis(const edm::Event& iEvent,
         //continue; //CosmicsCase
       }
 #endif
-      //edm::DetSet<PixelDigi>::const_iterator itDigi=itDigiSet->begin();
       edm::DetSet<PixelDigi>::const_iterator itDigi=itDigiSet->begin();
       for(; itDigi!=itDigiSet->end(); ++itDigi) {
         Digi digi;
@@ -1192,10 +1181,7 @@ void PilotBladeStudy::findClosestClusters(
   clu.pixY[i]=(((itClosestCluster)->pixels())[i]).y;
       }
     }
-    
   }
-
-
 }
 // ------------------------ end of findClosestClusters ------------------------ 
 
@@ -1307,9 +1293,6 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
         nclu_roc[modroc]++;
         npix_roc[modroc]+=itCluster->size();
         
-
-
-
         if (DEBUGClusters) std::cout<<"\t#"<<clust.i<<" charge: "<<clust.charge<<" size: "<<clust.size<<std::endl;
 
         clust_.push_back(clust);
@@ -1368,4 +1351,3 @@ int PilotBladeStudy::get_RocID_from_local_coords(const float& lx, const float& l
   || DetID == 344133124 || DetID == 344134148 )
 */
 DEFINE_FWK_MODULE(PilotBladeStudy);
-
