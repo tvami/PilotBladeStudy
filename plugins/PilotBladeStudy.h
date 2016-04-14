@@ -8,9 +8,6 @@
  ************************************************************/
 
 // ----------------------------------------------------------------------------------------
-// CMSSW Version:
-#define CMSSW_VER 75
-
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 
 #include "FWCore/Framework/interface/Event.h"
@@ -134,8 +131,6 @@ class PilotBladeStudy : public edm::EDAnalyzer
   virtual void endJob();
   virtual void beginRun(edm::Run const&, edm::EventSetup const&);
   virtual void endRun(edm::Run const&, edm::EventSetup const&);
-  virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
-  virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
   
  private:
@@ -145,21 +140,21 @@ class PilotBladeStudy : public edm::EDAnalyzer
   edm::EDGetTokenT<edm::ConditionsInRunBlock> condInRunBlockToken_;
   edm::EDGetTokenT<edm::ConditionsInLumiBlock> condInLumiBlockToken_;
   
-  edm::EDGetTokenT<reco::BeamSpot>                  		tok_BS_;
+  edm::EDGetTokenT<reco::BeamSpot>                  		BSToken_;
   edm::EDGetTokenT<LumiSummary> lumiSummaryToken_;
 
-  edm::EDGetTokenT< edm::DetSetVector<PixelDigi> >	tok_siPixelDigis_;
-  edm::EDGetTokenT< edm::DetSetVector<PixelDigi> >	tok_PBDigis_;
-  edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >	tok_siPixelClusters_;
-  edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >	tok_PBClusters_;
+  edm::EDGetTokenT< edm::DetSetVector<PixelDigi> >	siPixelDigisToken_;
+  edm::EDGetTokenT< edm::DetSetVector<PixelDigi> >	PBDigisToken_;
+  edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >	siPixelClustersToken_;
+  edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >	PBClustersToken_;
   edm::EDGetTokenT<TrajTrackAssociationCollection> trajTrackCollToken_;
   
-  edm::EDGetTokenT< edm::DetSetVector<SiPixelRawDataError> >	tok_SiPixelRawDataError_;
+  edm::EDGetTokenT< edm::DetSetVector<SiPixelRawDataError> >	SiPixelRawDataErrorToken_;
   edm::EDGetTokenT<edm::EDCollection<DetId> > trackingErrorToken_;
   edm::EDGetTokenT<edm::EDCollection<DetId> > userErrorToken_;
 
   TTree* eventTree_;
-  TTree* lumiTree_;
+  //TTree* lumiTree_;
   TTree* runTree_;
   TTree* trackTree_;
   TTree* digiTree_;
@@ -191,8 +186,6 @@ class PilotBladeStudy : public edm::EDAnalyzer
       int nclu[4]; // [0: fpix, i: layer i]
       int npix[4]; // [0: fpix, i: layer i]
     
-      float intlumi;
-      float instlumi;
       int wbc;
       int delay;
       int ntracks;
@@ -213,8 +206,6 @@ class PilotBladeStudy : public edm::EDAnalyzer
       
         for (size_t i=0; i<4; i++) nclu[i]=npix[i]=NOVAL_I;
       
-        intlumi=NOVAL_F;
-        instlumi=NOVAL_F;
         wbc=NOVAL_I;
         //delay=NOVAL_I;
         ntracks=NOVAL_I;
@@ -224,12 +215,12 @@ class PilotBladeStudy : public edm::EDAnalyzer
       
       //list="fill/I:run/I:ls/I:orb/I:bx/I:evt/I:nclu[4]/I:npix[4]/I:intlumi/F:instlumi/F:"
 	//"wbc/I:delay/I:ntracks/I:federrs_size/I:federrs[federrs_size][2]";
-      list="fill/I:run/I:ls/I:orb/I:bx/I:evt/I:nclu[4]/I:npix[4]/I:intlumi/F:instlumi/F:"
+      list="fill/I:run/I:ls/I:orb/I:bx/I:evt/I:nclu[4]/I:npix[4]/I:"
 	"wbc/I:ntracks/I:federrs_size/I:federrs[federrs_size][2]";
     }
   } evt_;
   
-  
+  /*
   // Lumi info
   class LumiData {
    public:
@@ -257,7 +248,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
     }
 
   } lumi_;
-
+*/
   // Run info
   class RunData {
    public:
@@ -590,14 +581,22 @@ class PilotBladeStudy : public edm::EDAnalyzer
 
   ModuleData getModuleData(uint32_t rawId, const std::map<uint32_t, int>& federrors, std::string scheme="offline");
 
-  void analyzeDigis(const edm::Event&, const edm::EventSetup&, edm::EDGetTokenT< edm::DetSetVector<PixelDigi> >, std::map<uint32_t, int> federrors);
-  void analyzeClusters(const edm::Event&, const edm::EventSetup&, edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >, std::map<uint32_t, int> federrors);
+  void ReadFEDErrors(const edm::Event&, const edm::EventSetup&, 
+		     edm::EDGetTokenT< edm::DetSetVector<SiPixelRawDataError> >, 
+		     edm::EDGetTokenT< edm::EDCollection<DetId> >, std::map<uint32_t, int>);
+  
+  void analyzeDigis(const edm::Event&, const edm::EventSetup&, 
+		    edm::EDGetTokenT< edm::DetSetVector<PixelDigi> >, std::map<uint32_t, int>, 
+		    int, bool);
+  void analyzeClusters(const edm::Event&, const edm::EventSetup&, 
+		       edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >, std::map<uint32_t, int>);
   
   int get_RocID_from_cluster_coords(const float&, const float&, const ModuleData&);
   int get_RocID_from_local_coords(const float&, const float&, const ModuleData&);
 				
   void findClosestClusters(const edm::Event&, const edm::EventSetup&, uint32_t, 
-			   float, float, float*, float*, edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >, ClustData&);
+			   float, float, float*, float*, 
+			   edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >, ClustData&);
 			    
 
 };
