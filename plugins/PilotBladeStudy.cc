@@ -11,16 +11,22 @@ PilotBladeStudy::PilotBladeStudy(edm::ParameterSet const& iConfig) : iConfig_(iC
   digiTree_ = NULL;
   outfile_  = NULL;
   
-  BSToken_                  = consumes<reco::BeamSpot>(edm::InputTag("offlineBeamSpot"));
-  condInRunBlockToken_      = mayConsume<edm::ConditionsInRunBlock, InRun >(edm::InputTag("conditionsInEdm"));
-  condInLumiBlockToken_     = mayConsume<edm::ConditionsInLumiBlock, InLumi >(edm::InputTag("conditionsInEdm"));
+  usePixelCPE_=false;
   
-  siPixelDigisToken_        = consumes<edm::DetSetVector<PixelDigi> >(edm::InputTag("siPixelDigis"));
-  PBDigisToken_             = consumes<edm::DetSetVector<PixelDigi> >(edm::InputTag("PBDigis"));
+  BSToken_                  = consumes< reco::BeamSpot >(edm::InputTag("offlineBeamSpot"));
+  condInRunBlockToken_      = mayConsume< edm::ConditionsInRunBlock, InRun >(edm::InputTag("conditionsInEdm"));
+  condInLumiBlockToken_     = mayConsume< edm::ConditionsInLumiBlock, InLumi >(edm::InputTag("conditionsInEdm"));
   
-  trackingErrorToken_	    = consumes<edm::EDCollection<DetId> >(edm::InputTag("siPixelDigis"));
+  siPixelDigisToken_        = consumes< edm::DetSetVector<PixelDigi> >(edm::InputTag("siPixelDigis"));
+  PBDigisToken_             = consumes< edm::DetSetVector<PixelDigi> >(edm::InputTag("PBDigis"));
+  siPixelClustersToken_     = consumes< edmNew::DetSetVector<SiPixelCluster> >(edm::InputTag("siPixelClusters"));
+  PBClustersToken_          = consumes< edmNew::DetSetVector<SiPixelCluster> >(edm::InputTag("PBClusters"));
+  std::string trajTrackCollectionInput = iConfig.getParameter<std::string>("trajectoryInput");
+  trajTrackCollToken_	    = consumes<TrajTrackAssociationCollection>(edm::InputTag(trajTrackCollectionInput));
+  
+  trackingErrorToken_	    = consumes< edm::EDCollection<DetId> >(edm::InputTag("siPixelDigis"));
   SiPixelRawDataErrorToken_ = consumes< edm::DetSetVector<SiPixelRawDataError> >(edm::InputTag("siPixelDigis"));
-  userErrorToken_	    = consumes<edm::EDCollection<DetId> >(edm::InputTag("siPixelDigis", "UserErrorModules"));
+  userErrorToken_	    = consumes< edm::EDCollection<DetId> >(edm::InputTag("siPixelDigis", "UserErrorModules"));
 }
 
 PilotBladeStudy::~PilotBladeStudy() { }
@@ -33,10 +39,18 @@ void PilotBladeStudy::beginJob() {
     fileName=iConfig_.getParameter<std::string>("fileName");
   }
   
+  if (iConfig_.exists("usePixelCPE")) {
+    usePixelCPE_=iConfig_.getParameter<bool>("usePixelCPE");
+    std::cout<<"Pixel Cluster Parameter Estimator (CPE) is used "<<std::endl;
+  }
+  
+  
   outfile_ = new TFile(fileName.c_str(), "RECREATE");
   
   EventData         evt_;
-  Digi		    digi;
+  Digi		    digi_;
+  Cluster           clust;
+  TrackData 	    track_;
   
   eventTree_ = new TTree("eventTree", "The event");
   eventTree_->Branch("event", &evt_, evt_.list.data());
@@ -44,11 +58,21 @@ void PilotBladeStudy::beginJob() {
   runTree_ = new TTree("runTree", "The run");
   runTree_->Branch("run", &run_, run_.list.data());
 
-  digiTree_ = new TTree("digiTree", "Pixel digis");
-  digiTree_->Branch("event", &evt_, evt_.list.data());
-  digiTree_->Branch("digi", &digi, digi.list.data());
-  digiTree_->Branch("module", &digi.mod, digi.mod.list.data());
-  digiTree_->Branch("module_on", &digi.mod_on, digi.mod_on.list.data());
+  digiTree_ = new TTree("digiTree", "The digis");
+  digiTree_->Branch("event",        &evt_, 		evt_.list.data());
+  digiTree_->Branch("digi", 	    &digi_, 		digi_.list.data());
+  digiTree_->Branch("module",       &digi_.mod, 	digi_.mod.list.data());
+  digiTree_->Branch("module_on",    &digi_.mod_on, 	digi_.mod_on.list.data());
+  
+  clustTree_ = new TTree("clustTree", "The clusters");
+  clustTree_->Branch("event",       &evt_,		evt_.list.data());
+  clustTree_->Branch("clust",       &clust,		clust.list.data());
+  clustTree_->Branch("module",      &clust.mod,		clust.mod.list.data());
+  clustTree_->Branch("module_on",   &clust.mod_on,	clust.mod_on.list.data());
+
+  trackTree_ = new TTree("trackTree", "The tracks");
+  trackTree_->Branch("event", 	    &evt_, 		evt_.list.data());
+  trackTree_->Branch("track",       &track_, 		track_.list.data());
 }
 
 // ------------------------------ endJob --------------------------------------
@@ -66,12 +90,13 @@ void PilotBladeStudy::beginRun(edm::Run const& iRun, edm::EventSetup const& iSet
   // ConditionsInRunBlock for fill number
   edm::Handle<edm::ConditionsInRunBlock> condInRunBlock;
   iRun.getByToken(condInRunBlockToken_, condInRunBlock);
+  
   if (condInRunBlock.isValid()) {
      run_.fill = condInRunBlock->lhcFillNumber;
   } else if (run_.run==1) {
    run_.fill = 0;
   } else {
-    std::cout<<"** ERROR (beginRun): no condInRunBlock info is available\n";
+    std::cout<<"No condInRunBlock info is available\n";
     return;
   }
   std::cout<<"Begin Run: "<<evt_.run<<" in Fill: "<<evt_.fill<<std::endl;
@@ -83,7 +108,7 @@ void PilotBladeStudy::endRun(edm::Run const& iRun, edm::EventSetup const& iSetup
   edm::Handle<edm::ConditionsInRunBlock> condInRunBlock;
   iRun.getByToken(condInRunBlockToken_, condInRunBlock);
   if (!condInRunBlock.isValid()) {
-    std::cout<<" CondInRunBlock info is NOT available" << std::endl;
+    std::cout<<"CondInRunBlock info is NOT available" << std::endl;
   } else {
     run_.fill = condInRunBlock->lhcFillNumber;
     run_.run = iRun.run();
@@ -95,7 +120,7 @@ void PilotBladeStudy::endRun(edm::Run const& iRun, edm::EventSetup const& iSetup
 // -------------------------------- analyze -----------------------------------
 void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
   bool DEBUG = false;
-  bool cosmicsCase = false;
+  bool cosmicsCase = true;
   if (DEBUG) std::cout << "Processing the event " << std::endl;
   
   init_all();
@@ -107,21 +132,28 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   evt_.orb  = iEvent.orbitNumber();
   evt_.bx   = iEvent.bunchCrossing();
   evt_.evt  = iEvent.id().event();
-  evt_.wbc  = wbc[iEvent.id().run()];
 
   // ----------------------- Read FED errors -----------------------
   std::map<uint32_t, int> federrors;
   ReadFEDErrors(iEvent, iSetup, SiPixelRawDataErrorToken_, trackingErrorToken_, federrors);
   
   // ----------------------- Analyze digis -----------------------
-  analyzeDigis(iEvent, iSetup, siPixelDigisToken_, federrors, 0, cosmicsCase=true);
-  analyzeDigis(iEvent, iSetup, PBDigisToken_, federrors, 1, cosmicsCase=true);
+  analyzeDigis(iEvent, iSetup, siPixelDigisToken_, federrors, 0, cosmicsCase);
+  analyzeDigis(iEvent, iSetup, PBDigisToken_, federrors, 1, cosmicsCase);
+  
+  // ----------------------- Analyze clusters ----------------------
+  analyzeClusters(iEvent, iSetup, siPixelClustersToken_, federrors, 0, cosmicsCase); 
+  analyzeClusters(iEvent, iSetup, PBClustersToken_, federrors, 1, cosmicsCase);
+  
+  // ------------------------ Analyze tracks -----------------------
+  analyzeTracks(iEvent, iSetup, trajTrackCollToken_, federrors, 1, cosmicsCase); 
+  // ---------------------------------------------------------------
     
   // ---------------------- Filling the trees ----------------------
   eventTree_->SetBranchAddress("event", &evt_);
   eventTree_->Fill();
 
-  // fill the digiTree
+  // Fill the digiTree
   Digi dig;
   digiTree_->SetBranchAddress("event", &evt_);
   digiTree_->SetBranchAddress("digi", &dig);
@@ -131,8 +163,27 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     dig = digis_[i];
     digiTree_->Fill();
   }
-  
-}//end of analyzer
+
+  // Fill the clustTree_
+  clustTree_->SetBranchAddress("event", &evt_);
+  for (size_t i=0; i<clust_.size(); i++) {
+    clustTree_->SetBranchAddress("clust", &clust_[i]);
+    clustTree_->SetBranchAddress("module", &clust_[i].mod);
+    clustTree_->SetBranchAddress("module_on", &clust_[i].mod_on);
+    clustTree_->Fill();
+  }
+ 
+  // Fill the trackTree
+  TrackData trk;
+  trackTree_->SetBranchAddress("event", &evt_);
+  trackTree_->SetBranchAddress("track", &trk);
+  for (size_t i=0; i<tracks_.size(); i++) {
+    trk = tracks_[i];
+    trackTree_->Fill();
+  }
+  // ------------------------ end of filling the trees ------------------------
+}
+// ----------------------------- end of analyzer ------------------------------
 
 // ------------------------------ Used functions ------------------------------
 
@@ -261,7 +312,6 @@ void PilotBladeStudy::ReadFEDErrors(const edm::Event& iEvent,
   bool DEBUG = false;
   int federr[16];
   for (int i=0; i<16; i++) federr[i]=0;
-  //assert(evt_.federrs_size==0);
   
   edm::Handle<edm::DetSetVector<SiPixelRawDataError> >  siPixelRawDataErrorCollectionHandle;
   iEvent.getByToken(RawDataErrorToken_, siPixelRawDataErrorCollectionHandle); 
@@ -396,6 +446,145 @@ void PilotBladeStudy::analyzeDigis(const edm::Event& iEvent,
 }
 // ---------------------------- end of analyzeDigis --------------------------
 
+// ------------------------------ analyzeClusters -----------------------------
+
+void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent, 
+                                         const edm::EventSetup& iSetup,  
+                                         edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> > clusterColl,
+                                         std::map<uint32_t, int> federrors,
+					 int verbosity,
+					 bool cosmicsCase
+                                     ) {
+  bool DEBUGClusters = false;
+  if (verbosity) DEBUGClusters = true;
+  
+  // Get the handle for clusters
+  edm::Handle<edmNew::DetSetVector<SiPixelCluster> > clusterCollectionHandle;
+  iEvent.getByToken(clusterColl, clusterCollectionHandle);
+  
+  if (!clusterCollectionHandle.isValid()) {
+     std::cout<< "The clusterCollectionHandle is invalid" << std::endl;
+  } else {
+    // Create a itarator that loops on the cluster set collection
+    const edmNew::DetSetVector<SiPixelCluster>& clusterCollection = *clusterCollectionHandle;
+    edmNew::DetSetVector<SiPixelCluster>::const_iterator itClusterSet =  clusterCollection.begin();
+    
+    // Get the geometry of the tracker for converting the LocalPoint to a GlobalPoint
+    edm::ESHandle<TrackerGeometry> tracker;
+    iSetup.get<TrackerDigiGeometryRecord>().get(tracker);    
+    const TrackerGeometry *tkgeom = &(*tracker);
+
+    // Choose the CPE Estimator that will be used to estimate the LocalPoint of the cluster
+    edm::ESHandle<PixelClusterParameterEstimator> cpEstimator;
+    iSetup.get<TkPixelCPERecord>().get("PixelCPEGeneric", cpEstimator);
+    if (!cpEstimator.isValid()) {
+      std::cout << "The cpEstimator is not valid!" << std::endl;
+    }
+    const PixelClusterParameterEstimator &cpe(*cpEstimator);
+
+    // Start looping on the cluster sets
+    for (; itClusterSet != clusterCollection.end(); itClusterSet++) {
+      DetId detId(itClusterSet->id());
+      unsigned int subDetId=detId.subdetId();
+         
+      if (DEBUGClusters) std::cout << "Looping on the cluster sets ";
+      
+      // Take only pixel clusters. If this is a cosmicsCase then we save everything
+      if (subDetId!=PixelSubdetector::PixelEndcap && subDetId!=PixelSubdetector::PixelBarrel
+	&& cosmicsCase==false) {
+        std::cout << "Not a pixel cluster" << std::endl;
+        continue;
+      }
+      
+      const PixelGeomDetUnit *pixdet = (const PixelGeomDetUnit*) tkgeom->idToDetUnit(detId);
+      // Create a itarator that loops on the clusters which are in the set
+      edmNew::DetSet<SiPixelCluster>::const_iterator itCluster=itClusterSet->begin();
+      
+      for(; itCluster!=itClusterSet->end(); ++itCluster) {
+        if (DEBUGClusters) std::cout << "Looping on the clusters in the set" << std::endl;
+	
+	// Get the LocalPoint from PixelClusterParameterEstimator
+	const Surface& surface = tracker->idToDet(detId)->surface();
+	LocalPoint lp(-9999., -9999., -9999.);
+	if (usePixelCPE_) {
+	  PixelClusterParameterEstimator::ReturnType params = cpe.getParameters(*itCluster,*pixdet);
+	  lp = std::get<0>(params);
+	  if (DEBUGClusters) std::cout << "PixelClusterParameterEstimator: " << lp << std::endl;
+	}
+	
+        Cluster clust;	
+	GlobalPoint gp = surface.toGlobal(lp);
+	
+        clust.x=itCluster->x();
+        clust.y=itCluster->y();
+        clust.glx = gp.x();
+        clust.gly = gp.y();
+        clust.glz = gp.z();
+        
+        clust.mod    = getModuleData(detId.rawId(), federrors);
+        clust.mod_on = getModuleData(detId.rawId(), federrors, "online");
+        
+        clust_.push_back(clust);
+      }
+    } // loop on cluster sets
+  }
+}
+// --------------------------- end of analyzeClusters -------------------------
+
+// ------------------------------ analyzeTracks -----------------------------
+void PilotBladeStudy::analyzeTracks(const edm::Event& iEvent, 
+                                         const edm::EventSetup& iSetup,  
+                                         edm::EDGetTokenT< TrajTrackAssociationCollection > trackColl,
+                                         std::map<uint32_t, int> federrors,
+					 int verbosity,
+					 bool cosmicsCase
+                                     ) {
+  bool DEBUGTracks = false;
+  if (verbosity) DEBUGTracks = true;
+  
+  edm::Handle<TrajTrackAssociationCollection> trajTrackCollectionHandle;
+  iEvent.getByToken(trackColl, trajTrackCollectionHandle);
+  
+  if (!trajTrackCollectionHandle.isValid()) {
+    std::cout << "trajTrackCollectionHandle is not valid, exiting the loop" << std::endl;
+  } else {
+    if (DEBUGTracks) std::cout << " Run " << evt_.run << " Event " << evt_.evt;
+    if (DEBUGTracks) std::cout << " Number of tracks = " << trajTrackCollectionHandle->size() << std::endl;
+    
+    TrajTrackAssociationCollection::const_iterator itTrajTrack=trajTrackCollectionHandle->begin();
+    for (;itTrajTrack!=trajTrackCollectionHandle->end(); itTrajTrack++) {
+      const Trajectory& traj  = *itTrajTrack->key;
+      const Track&      track = *itTrajTrack->val;
+      
+      TrackData track_;
+      track_.pixel=0;
+      track_.strip=0;
+      track_.pt=track.pt();
+      track_.dxy=track.dxy();
+      track_.dz=track.dz();
+      track_.eta=track.eta();
+      track_.phi=track.phi();
+      
+      std::vector<TrajectoryMeasurement> trajMeasurements = traj.measurements();
+      std::vector<TrajectoryMeasurement>::const_iterator itTraj;
+      for(itTraj=trajMeasurements.begin(); itTraj!=trajMeasurements.end(); ++itTraj) {
+	TransientTrackingRecHit::ConstRecHitPointer recHit = itTraj->recHit();
+	uint subDetId = recHit->geographicalId().subdetId();
+      
+	if (recHit->isValid()) {
+	  if      (subDetId == PixelSubdetector::PixelBarrel) track_.pixel++;
+	  else if (subDetId == PixelSubdetector::PixelEndcap) track_.pixel++;
+	  else if (subDetId == StripSubdetector::TIB) track_.strip++;
+	  else if (subDetId == StripSubdetector::TOB) track_.strip++;
+	  else if (subDetId == StripSubdetector::TID) track_.strip++;
+	  else if (subDetId == StripSubdetector::TEC) track_.strip++;
+	}
+      }
+      tracks_.push_back(track_);
+    }
+  }
+}
+// --------------------------- end of analyzeTracks -------------------------
 // Other useful things
 /*
   DetID == 344130820 || DetID == 344131844 || DetID == 344132868 
