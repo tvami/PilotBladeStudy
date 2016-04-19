@@ -158,15 +158,12 @@ class PilotBladeStudy : public edm::EDAnalyzer
   TTree* trackTree_;
   TTree* digiTree_;
   TTree* clustTree_;
-//   TTree* trajTree_;
+  TTree* trajTree_;
   TFile* outfile_;
 
   bool usePixelCPE_;
   bool isNewLS_;
     
-  unsigned int nHits=0;
-  float nPBHits=0.0;
-
  public:
 
 // ------------------------------- EventData info ------------------------------
@@ -224,8 +221,8 @@ class PilotBladeStudy : public edm::EDAnalyzer
 // ------------------------------- TrackData info ------------------------------
   class TrackData {
    public:
-    int pixel;
-    int strip;
+    int nPixelHit;
+    int nStripHit;
     float pt;
     float dxy;
     float dz;
@@ -236,15 +233,15 @@ class PilotBladeStudy : public edm::EDAnalyzer
    
     TrackData() { init(); }
     void init() {
-      pixel=NOVAL_I;
-      strip=NOVAL_I;
+      nPixelHit=NOVAL_I;
+      nStripHit=NOVAL_I;
       pt=NOVAL_F;
       dxy=NOVAL_F;
       dz=NOVAL_F;      
       eta=NOVAL_F;
       phi=NOVAL_F;
 
-      list="pixel/I:strip/I:pt/F:dxy/F:dz/F:eta/F:phi/F";
+      list="nPixelHit/I:nStripHit/I:pt/F:dxy/F:dz/F:eta/F:phi/F";
     }
   };
 
@@ -385,78 +382,76 @@ class PilotBladeStudy : public edm::EDAnalyzer
 // ------------------------------ TrajectoryData info ---------------------------------
   class TrajMeasData {
    public:
-
+    int type;
+    
+    int nPixelHit;
+    int nStripHit;
+    int nPBHits;
+    
     float lx;
     float ly;
+    float lx_err;
+    float ly_err;
     float glx;
     float gly;
     float glz;
-    float res_dx;
-    float res_dz;
-    int hit_near;
     
-    int nclu_mod;
-    int nclu_roc;
-    int npix_mod;
-    int npix_roc;
-
-    float dx_cl[2];
-    float dx_cl_corr[2];
-    float dy_cl[2];
-    float dy_cl_corr[2];
-    float dx_hit;
-    float dy_hit;
-
-    int i; // serial num of trajectory measurement on the (single) track of the event
     int onEdge;
-    int type;
-
-    float lx_err;
-    float ly_err;
-    float d_cl[2];
-
     float alpha;
     float beta;
-    float norm_charge;
+    
+    float dx_cl;
+    float dy_cl;
+//  float dx_cl_corr;
+//  float dy_cl_corr;
+    float d_cl;
+
+    float dx_hit;
+    float dy_hit;
+    float d_hit;
+
+
+    //float norm_charge;
 
     std::string list;
 
     TrajMeasData() { init(); }
     void init() {
-      lx=NOVAL_F;
-      ly=NOVAL_F;
-
-      glx=NOVAL_F;
-      
-      gly=NOVAL_F;
-      glz=NOVAL_F;
-            
-      res_dx=NOVAL_F;
-      res_dz=NOVAL_F;
-      hit_near=NOVAL_I;
-      
-      dx_cl[0]=dx_cl[1]=NOVAL_F;
-      dx_cl_corr[0]=dx_cl_corr[1]=NOVAL_F;
-      dy_cl[0]=dy_cl[1]=NOVAL_F;
-      dx_cl_corr[0]=dy_cl_corr[1]=NOVAL_F;
-      dx_hit=NOVAL_F;
-      dy_hit=NOVAL_F;
-      
-
-      i=NOVAL_I;
-      onEdge=NOVAL_I;
       type=NOVAL_I;
       
+      nPixelHit=NOVAL_I;
+      nStripHit=NOVAL_I;
+      nPBHits=NOVAL_I;
+      
+      lx=NOVAL_F;
+      ly=NOVAL_F;
       lx_err=NOVAL_F;
       ly_err=NOVAL_F;
-      d_cl[0]=d_cl[1]=NOVAL_F;
-
+      glx=NOVAL_F;
+      gly=NOVAL_F;
+      glz=NOVAL_F;
+      
+      onEdge=NOVAL_I;
       alpha=NOVAL_F;
       beta=NOVAL_F;
-      norm_charge=NOVAL_F;
+            
+      dx_cl=NOVAL_F;
+      dy_cl=NOVAL_F;
+//    dx_cl_corr=NOVAL_F;
+//    dx_cl_corr=NOVAL_F;
+      d_cl=NOVAL_F;
+      
+      dx_hit=NOVAL_F;
+      dy_hit=NOVAL_F;
+      d_hit=NOVAL_F;
+//       norm_charge=NOVAL_F;
 
-      list="lx/F:ly/F:glx/F:gly/F:glz/F:res_dx/F:res_dz/F:hit_near/I:nclu_mod/I:nclu_roc/I:npix_mod/I:npix_roc/I:"
-	    "dx_cl[2]/F:dx_cl_corr[2]/F:dy_cl[2]/F:dy_cl_corr[2]/F:dx_hit/F:dy_hit/F:i/I:onEdge/I:type/I:lx_err/F:ly_err/F:d_cl[2]/F:alpha/F:beta/F:norm_charge/F";
+//       list="lx/F:ly/F:glx/F:gly/F:glz/F:res_dx/F:res_dz/F:hit_near/I:nPixelHit/I:nStripHit/I:nPBHits/I"
+//       "dx_cl[2]/F:dx_cl_corr[2]/F:dy_cl[2]/F:dy_cl_corr[2]/F:dx_hit/F:dy_hit/F:"
+//       "i/I:onEdge/I:type/I:lx_err/F:ly_err/F:d_cl[2]/F:alpha/F:beta/F:norm_charge/F";
+      
+      list="type/I:nPixelHit/I:nStripHit/I:nPBHits/I:lx/F:ly/F:lx_err/F:ly_err/F:glx/F:gly/F:glz/F:"
+      "onEdge/I:alpha/F:beta/F:dx_cl/F:dy_cl/F:d_cl/F:dx_hit/F:dy_hit/F:d_hit/F";
     }
   };
 // -------------------------- end of TrajectoryData info ------------------------------  
@@ -540,9 +535,12 @@ class PilotBladeStudy : public edm::EDAnalyzer
   void analyzeTracks(const edm::Event&, const edm::EventSetup&, 
 		       edm::EDGetTokenT< TrajTrackAssociationCollection >, std::map<uint32_t, int>,
 		       int, bool);
+  void analyzeTrajs(const edm::Event&, const edm::EventSetup&, 
+		       edm::EDGetTokenT< TrajTrackAssociationCollection >, std::map<uint32_t, int>,
+		       int, bool);
   				
   void findClosestClusters(const edm::Event&, const edm::EventSetup&, uint32_t, 
-			   float, float, float*, float*, 
+			   float, float, float, float, 
 			   edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >, ClustData&);
 			    
 
