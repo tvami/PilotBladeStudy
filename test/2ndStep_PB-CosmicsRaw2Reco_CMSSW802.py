@@ -101,12 +101,11 @@ if PB :
     SiPixelGainCalibrationServiceParameters,
     src = cms.InputTag("PBDigis"),
     ChannelThreshold = cms.int32(1000),
-    MissCalibrate = cms.untracked.bool(False), # should be True #Tav
+    MissCalibrate = cms.untracked.bool(True),
     SplitClusters = cms.bool(False),
     VCaltoElectronGain = cms.int32(65),
     VCaltoElectronOffset = cms.int32(-414),                          
     payloadType = cms.string('Offline'),
-    #payloadType = cms.string('HLT'),
     SeedThreshold = cms.int32(1000),
     ClusterThreshold = cms.double(4000.0),
     maxNumberOfClusters = cms.int32(-1),
