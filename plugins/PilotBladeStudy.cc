@@ -216,6 +216,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       for (size_t jtrk=0; jtrk<trajmeas_.size(); jtrk++) {
 	for (size_t j=0; j<trajmeas_[jtrk].size(); j++) {
 	  if (jtrk==itrk && j==i) continue;
+	  // Calculationg the minimum distance between two rechits
 	  float dx_hit=fabs(trajmeas_[itrk][i].lx-trajmeas_[jtrk][j].lx);
 	  float dy_hit=fabs(trajmeas_[itrk][i].ly-trajmeas_[jtrk][j].ly);
 	  float D=sqrt(dx_hit*dx_hit+dy_hit*dy_hit);
@@ -816,6 +817,7 @@ void PilotBladeStudy::findClosestClusters(
       continue;
     }
     
+    // Iterate on the clusters in the cluster set
     edmNew::DetSet<SiPixelCluster>::const_iterator itCluster=itClusterSet->begin();
     edmNew::DetSet<SiPixelCluster>::const_iterator itClosestCluster=itClusterSet->begin();
     
@@ -828,6 +830,7 @@ void PilotBladeStudy::findClosestClusters(
 	if (DEBUGfindClust) std::cout << "PixelClusterParameterEstimator: " << lp << std::endl;
       }
       
+      // Calculation the minimum distance of the rechit and the cluster
       float D = sqrt((lp.x()-lx)*(lp.x()-lx)+(lp.y()-ly)*(lp.y()-ly));
       if (DEBUGfindClust) std::cout << "Value of the D: " << D << std::endl; 
       if (D<minD) {
@@ -844,6 +847,7 @@ void PilotBladeStudy::findClosestClusters(
     }
     
     if (minD<9999.) {
+    	// Charge & others will be needed in a minute
 //       clu.charge=(itClosestCluster)->charge()/1000.0;
 //       clu.size=(itClosestCluster)->size();
 //       clu.edge=NOVAL_F;
