@@ -9,6 +9,9 @@ PilotBladeStudy::PilotBladeStudy(edm::ParameterSet const& iConfig) : iConfig_(iC
   eventTree_= NULL;
   runTree_  = NULL;
   digiTree_ = NULL;
+  clustTree_= NULL;
+  trackTree_= NULL;
+  trajTree_ = NULL;
   outfile_  = NULL;
   
   usePixelCPE_=false;
@@ -44,14 +47,15 @@ void PilotBladeStudy::beginJob() {
     std::cout<<"Pixel Cluster Parameter Estimator (CPE) is used "<<std::endl;
   }
   
-  
   outfile_ = new TFile(fileName.c_str(), "RECREATE");
   
   EventData         evt_;
   Digi		    digi_;
   Cluster           clust;
-  TrackData 	    track_;
-  
+  TrackData 	    track_; // TODO this should be without the _ shouldn't it?
+  TrajMeasurement   trajmeas;
+
+  // Setting up the Branch-es
   eventTree_ = new TTree("eventTree", "The event");
   eventTree_->Branch("event", &evt_, evt_.list.data());
   
@@ -73,6 +77,16 @@ void PilotBladeStudy::beginJob() {
   trackTree_ = new TTree("trackTree", "The tracks");
   trackTree_->Branch("event", 	    &evt_, 		evt_.list.data());
   trackTree_->Branch("track",       &track_, 		track_.list.data());
+  
+  trajTree_ = new TTree("trajTree", "The trajectory measurements in the event");
+  trajTree_->Branch("event",        &evt_,              evt_.list.data());
+  trajTree_->Branch("track",        &trajmeas.trk,      trajmeas.trk.list.data());
+  trajTree_->Branch("traj",         &trajmeas,          trajmeas.list.data());
+  trajTree_->Branch("clust",        &trajmeas.clu,      trajmeas.clu.list.data());
+//   trajTree_->Branch("clust_pixX",   &trajmeas.clu.pixX, "pixX[size]/F");
+//   trajTree_->Branch("clust_pixY",   &trajmeas.clu.pixY, "pixY[size]/F");
+  trajTree_->Branch("module",       &trajmeas.mod,      trajmeas.mod.list.data());
+  trajTree_->Branch("module_on",    &trajmeas.mod_on,   trajmeas.mod_on.list.data());
 }
 
 // ------------------------------ endJob --------------------------------------
@@ -147,6 +161,9 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   
   // ------------------------ Analyze tracks -----------------------
   analyzeTracks(iEvent, iSetup, trajTrackCollToken_, federrors, 1, cosmicsCase); 
+  
+  // --------------------- Analyze trajectories --------------------
+  analyzeTrajs(iEvent, iSetup, trajTrackCollToken_, federrors, 1, cosmicsCase); 
   // ---------------------------------------------------------------
     
   // ---------------------- Filling the trees ----------------------
@@ -163,6 +180,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     dig = digis_[i];
     digiTree_->Fill();
   }
+  // TODO: this should be like the clustTree
 
   // Fill the clustTree_
   clustTree_->SetBranchAddress("event", &evt_);
@@ -180,6 +198,36 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   for (size_t i=0; i<tracks_.size(); i++) {
     trk = tracks_[i];
     trackTree_->Fill();
+  }
+  // TODO: this should be like the clustTree
+  
+  TrajMeasurement traj;
+  trajTree_->SetBranchAddress("event",      &evt_);
+  trajTree_->SetBranchAddress("traj",       &traj);
+  trajTree_->SetBranchAddress("module",     &traj.mod);
+  trajTree_->SetBranchAddress("module_on",  &traj.mod_on);
+  trajTree_->SetBranchAddress("clust",      &traj.clu);
+//   trajTree_->SetBranchAddress("clust_pixX", &traj.clu.pixX);
+//   trajTree_->SetBranchAddress("clust_pixY", &traj.clu.pixY);
+  trajTree_->SetBranchAddress("track",      &traj.trk);
+  for (size_t itrk=0; itrk<trajmeas_.size(); itrk++) {
+    for (size_t i=0; i<trajmeas_[itrk].size(); i++) {
+      float minD=10000.;
+      for (size_t jtrk=0; jtrk<trajmeas_.size(); jtrk++) {
+	for (size_t j=0; j<trajmeas_[jtrk].size(); j++) {
+	  if (jtrk==itrk && j==i) continue;
+	  float dx_hit=fabs(trajmeas_[itrk][i].lx-trajmeas_[jtrk][j].lx);
+	  float dy_hit=fabs(trajmeas_[itrk][i].ly-trajmeas_[jtrk][j].ly);
+	  float D=sqrt(dx_hit*dx_hit+dy_hit*dy_hit);
+	  if (D<minD) {
+	    minD=D;
+	  }
+	}
+      }      
+      trajmeas_[itrk][i].d_hit = minD;
+      traj = trajmeas_[itrk][i];
+      trajTree_->Fill();
+    }
   }
   // ------------------------ end of filling the trees ------------------------
 }
@@ -474,6 +522,7 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
     iSetup.get<TrackerDigiGeometryRecord>().get(tracker);    
     const TrackerGeometry *tkgeom = &(*tracker);
 
+
     // Choose the CPE Estimator that will be used to estimate the LocalPoint of the cluster
     edm::ESHandle<PixelClusterParameterEstimator> cpEstimator;
     iSetup.get<TkPixelCPERecord>().get("PixelCPEGeneric", cpEstimator);
@@ -486,7 +535,8 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
     for (; itClusterSet != clusterCollection.end(); itClusterSet++) {
       DetId detId(itClusterSet->id());
       unsigned int subDetId=detId.subdetId();
-         
+      const PixelGeomDetUnit *pixdet = (const PixelGeomDetUnit*) tkgeom->idToDetUnit(detId);         
+      
       if (DEBUGClusters) std::cout << "Looping on the cluster sets ";
       
       // Take only pixel clusters. If this is a cosmicsCase then we save everything
@@ -496,10 +546,8 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
         continue;
       }
       
-      const PixelGeomDetUnit *pixdet = (const PixelGeomDetUnit*) tkgeom->idToDetUnit(detId);
       // Create a itarator that loops on the clusters which are in the set
       edmNew::DetSet<SiPixelCluster>::const_iterator itCluster=itClusterSet->begin();
-      
       for(; itCluster!=itClusterSet->end(); ++itCluster) {
         if (DEBUGClusters) std::cout << "Looping on the clusters in the set" << std::endl;
 	
@@ -557,8 +605,8 @@ void PilotBladeStudy::analyzeTracks(const edm::Event& iEvent,
       const Track&      track = *itTrajTrack->val;
       
       TrackData track_;
-      track_.pixel=0;
-      track_.strip=0;
+      track_.nPixelHit=0;
+      track_.nStripHit=0;
       track_.pt=track.pt();
       track_.dxy=track.dxy();
       track_.dz=track.dz();
@@ -572,12 +620,12 @@ void PilotBladeStudy::analyzeTracks(const edm::Event& iEvent,
 	uint subDetId = recHit->geographicalId().subdetId();
       
 	if (recHit->isValid()) {
-	  if      (subDetId == PixelSubdetector::PixelBarrel) track_.pixel++;
-	  else if (subDetId == PixelSubdetector::PixelEndcap) track_.pixel++;
-	  else if (subDetId == StripSubdetector::TIB) track_.strip++;
-	  else if (subDetId == StripSubdetector::TOB) track_.strip++;
-	  else if (subDetId == StripSubdetector::TID) track_.strip++;
-	  else if (subDetId == StripSubdetector::TEC) track_.strip++;
+	  if      (subDetId == PixelSubdetector::PixelBarrel) track_.nPixelHit++;
+	  else if (subDetId == PixelSubdetector::PixelEndcap) track_.nPixelHit++;
+	  else if (subDetId == StripSubdetector::TIB) track_.nStripHit++;
+	  else if (subDetId == StripSubdetector::TOB) track_.nStripHit++;
+	  else if (subDetId == StripSubdetector::TID) track_.nStripHit++;
+	  else if (subDetId == StripSubdetector::TEC) track_.nStripHit++;
 	}
       }
       tracks_.push_back(track_);
@@ -585,6 +633,235 @@ void PilotBladeStudy::analyzeTracks(const edm::Event& iEvent,
   }
 }
 // --------------------------- end of analyzeTracks -------------------------
+
+// ------------------------------ analyzeTrajs -----------------------------
+void PilotBladeStudy::analyzeTrajs(const edm::Event& iEvent, 
+                                         const edm::EventSetup& iSetup,  
+                                         edm::EDGetTokenT< TrajTrackAssociationCollection > trackColl,
+                                         std::map<uint32_t, int> federrors,
+					 int verbosity,
+					 bool cosmicsCase
+                                     ) {
+  bool DEBUGTrajs = false;
+  if (verbosity) DEBUGTrajs = true;
+  
+  edm::Handle<TrajTrackAssociationCollection> trajTrackCollectionHandle;
+  iEvent.getByToken(trackColl, trajTrackCollectionHandle);
+  
+  if (!trajTrackCollectionHandle.isValid()) {
+    std::cout << "trajTrackCollectionHandle is not valid, exiting the loop" << std::endl;
+  } else {
+    if (DEBUGTrajs) std::cout << " Run " << evt_.run << " Event " << evt_.evt;
+    if (DEBUGTrajs) std::cout << " Number of tracks = " << trajTrackCollectionHandle->size() << std::endl;
+
+     // --------------------- loop on the trajTrackCollection ----------------------
+    TrajTrackAssociationCollection::const_iterator itTrajTrack=trajTrackCollectionHandle->begin();
+    for (;itTrajTrack!=trajTrackCollectionHandle->end(); itTrajTrack++) {
+      const Trajectory& traj  = *itTrajTrack->key;
+          
+      TrajectoryStateCombiner trajStateComb;
+      
+      // ----------------------- loop on the trajMeasurements -----------------------
+      std::vector<TrajectoryMeasurement> trajMeasurements = traj.measurements();
+      std::vector<TrajectoryMeasurement>::const_iterator itTraj;
+      std::vector<TrajMeasurement> trajmeas; 
+      
+      for(itTraj=trajMeasurements.begin(); itTraj!=trajMeasurements.end(); ++itTraj) {
+	
+
+	TrajMeasurement meas;
+	TransientTrackingRecHit::ConstRecHitPointer recHit = itTraj->recHit();
+	uint subDetId = recHit->geographicalId().subdetId();
+	
+	if (DEBUGTrajs) std::cout << "detector ID: " << subDetId << std::endl;
+	
+	// Cutting on which trajectories we process
+	if(recHit->geographicalId().det() != DetId::Tracker) continue;
+		
+	if( (subDetId == 3 || subDetId == 4 || subDetId == 5 ||subDetId == 6) && cosmicsCase == false) {
+          std::cout << " Hit found on the Strip detector " << std::endl;
+          continue;
+        }
+                
+        meas.mod    = getModuleData(recHit->geographicalId().rawId(), federrors);
+        meas.mod_on = getModuleData(recHit->geographicalId().rawId(), federrors, "online");
+	
+	// Hit type codes: valid = 0, missing = 1, inactive = 2
+	if 	(recHit->getType() == TrackingRecHit::valid) 	meas.type=0;
+        else if (recHit->getType() == TrackingRecHit::missing) 	meas.type=1;
+        else if (recHit->getType() == TrackingRecHit::inactive) meas.type=2;
+	
+	if (recHit->isValid()) {
+	  if      (subDetId == PixelSubdetector::PixelBarrel) meas.nPixelHit++;
+	  else if (subDetId == PixelSubdetector::PixelEndcap) meas.nPixelHit++;
+	  else if (subDetId == StripSubdetector::TIB) meas.nStripHit++;
+	  else if (subDetId == StripSubdetector::TOB) meas.nStripHit++;
+	  else if (subDetId == StripSubdetector::TID) meas.nStripHit++;
+	  else if (subDetId == StripSubdetector::TEC) meas.nStripHit++;
+	}
+	
+	TrajectoryStateOnSurface predTrajState=trajStateComb(itTraj->forwardPredictedState(),
+                                                               itTraj->backwardPredictedState());       
+	
+	meas.lx=predTrajState.localPosition().x();
+        meas.ly=predTrajState.localPosition().y();
+	meas.lx_err=predTrajState.localError().positionError().xx();
+        meas.ly_err=predTrajState.localError().positionError().yy();
+	
+        meas.glx=predTrajState.globalPosition().x();
+        meas.gly=predTrajState.globalPosition().y();
+        meas.glz=predTrajState.globalPosition().z();
+	
+
+          
+        meas.onEdge=1;
+        if (fabs(meas.lx)<0.55 && fabs(meas.ly)<3.0) {
+          meas.onEdge=0;         
+        }
+        
+        LocalTrajectoryParameters predTrajParam= predTrajState.localParameters();
+        LocalVector dir = predTrajParam.momentum()/predTrajParam.momentum().mag();
+        meas.alpha = atan2(dir.z(), dir.x());
+        meas.beta = atan2(dir.z(), dir.y());
+	
+	// If Pilot Blade
+        if (meas.mod.disk == 3) {
+	  if (DEBUGTrajs) {
+	      std::cout << "***************************\n** PilotBlade hit found! **"<< std::endl;
+	      std::cout << "***************************" << std::endl;
+	  }
+	  meas.nPBHits++;
+	  
+	  // Finding the closest cluster and filling it's properties
+	  ClustData PBCluOnTrack;
+	  findClosestClusters(iEvent, iSetup, recHit->geographicalId().rawId(),
+			      meas.lx, meas.ly, meas.dx_cl, meas.dy_cl, 
+                              PBClustersToken_, PBCluOnTrack);
+	  meas.clu = PBCluOnTrack;
+	  if (meas.dx_cl != NOVAL_F) {
+	    meas.d_cl = sqrt(meas.dx_cl*meas.dx_cl+meas.dy_cl*meas.dy_cl);
+	  } else {
+	    meas.d_cl = NOVAL_F;
+	  } 
+	}
+	std::cout << "Number of PB Hits: " << meas.nPBHits << " out of " 
+	<< meas.nPixelHit << " Pixel hit in the events so far. " << std::endl;
+	
+	
+  
+	trajmeas.push_back(meas);         
+      }
+      trajmeas_.push_back(trajmeas);
+    }
+  }
+}
+// --------------------------- end of analyzeTrajs -------------------------
+
+
+// ---------------------------- findClosestClusters ---------------------------
+void PilotBladeStudy::findClosestClusters(
+	      const edm::Event& iEvent, 
+	      const edm::EventSetup& iSetup, uint32_t rawId, 
+	      float lx, float ly, float dx_cl, float dy_cl, 
+	      edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> > clusterColl,
+	      ClustData& clu) {
+  
+  bool DEBUGfindClust = true;
+  
+  // Choose the CPE Estimator that will be used to estimate the LocalPoint of the nearest cluster
+  edm::ESHandle<PixelClusterParameterEstimator> cpEstimator;
+  iSetup.get<TkPixelCPERecord>().get("PixelCPEGeneric", cpEstimator);
+  if (!cpEstimator.isValid()) {
+    std::cout << "The cpEstimator is not valid!" << std::endl;
+  }
+  const PixelClusterParameterEstimator &cpe(*cpEstimator);
+  
+  // Get the geometry of the tracker for converting the LocalPoint to a GlobalPoint
+  edm::ESHandle<TrackerGeometry> tracker;
+  iSetup.get<TrackerDigiGeometryRecord>().get(tracker);
+  if (!tracker.isValid()) {
+    std::cout << "The tracker record is not valid!" << std::endl;
+    return;
+  }
+  const TrackerGeometry *tkgeom = &(*tracker);
+  
+
+  // Get the handle for clusters
+  edm::Handle<edmNew::DetSetVector<SiPixelCluster> > clusterCollectionHandle;
+  iEvent.getByToken(clusterColl, clusterCollectionHandle);
+  
+  if (!clusterCollectionHandle.isValid()) {
+    std::cout << "The clusterCollectionHandle is not valid!" << std::endl;
+    return;
+  }
+  // Create a itarator that loops on the cluster set collection
+  const edmNew::DetSetVector<SiPixelCluster>& clusterCollection= *clusterCollectionHandle;
+  edmNew::DetSetVector<SiPixelCluster>::const_iterator itClusterSet = clusterCollection.begin();
+  
+  // Start looping on the cluster sets
+  for ( ; itClusterSet!=clusterCollection.end(); itClusterSet++) {
+    
+    float minD=10000.;
+    DetId detId(itClusterSet->id());
+    unsigned int subDetId=detId.subdetId();
+    const PixelGeomDetUnit *pixdet = (const PixelGeomDetUnit*) tkgeom->idToDetUnit(detId);
+    
+    if (detId.rawId()!=rawId) {
+      if (DEBUGfindClust) std::cout << " Wrong rawId " << std::endl;
+      continue;
+    }
+    
+    if (subDetId!=PixelSubdetector::PixelBarrel &&  subDetId!=PixelSubdetector::PixelEndcap) {
+      std::cout << " Not a pixel cluster!" << std::endl; 
+      continue;
+    }
+    
+    edmNew::DetSet<SiPixelCluster>::const_iterator itCluster=itClusterSet->begin();
+    edmNew::DetSet<SiPixelCluster>::const_iterator itClosestCluster=itClusterSet->begin();
+    
+    for(; itCluster!=itClusterSet->end(); ++itCluster) {
+      LocalPoint lp(itCluster->x(), itCluster->y(), 0.);
+      
+      if (usePixelCPE_) {
+	PixelClusterParameterEstimator::ReturnType params = cpe.getParameters(*itCluster,*pixdet);
+	lp = std::get<0>(params);
+	if (DEBUGfindClust) std::cout << "PixelClusterParameterEstimator: " << lp << std::endl;
+      }
+      
+      float D = sqrt((lp.x()-lx)*(lp.x()-lx)+(lp.y()-ly)*(lp.y()-ly));
+      if (DEBUGfindClust) std::cout << "Value of the D: " << D << std::endl; 
+      if (D<minD) {
+	minD=D;
+	dx_cl=lp.x();
+	dy_cl=lp.y();
+	itClosestCluster = itCluster;
+      } 
+    } // loop on cluster sets
+    
+    if (minD<9999.) {
+      dx_cl=dx_cl-lx;
+      dy_cl=dy_cl-ly;
+    }
+    
+    if (minD<9999.) {
+//       clu.charge=(itClosestCluster)->charge()/1000.0;
+//       clu.size=(itClosestCluster)->size();
+//       clu.edge=NOVAL_F;
+//       clu.sizeX=(itClosestCluster)->sizeX();
+//       clu.sizeY=(itClosestCluster)->sizeY();
+      clu.x=(itClosestCluster)->x();
+      clu.y=(itClosestCluster)->y();
+//       for (int i=0; i<(itClosestCluster)->size() && i<1000; i++) {
+// 	clu.adc[i]=float((itClosestCluster)->pixelADC()[i])/1000.0;
+// 	clu.pixX[i]=(((itClosestCluster)->pixels())[i]).x;
+// 	clu.pixY[i]=(((itClosestCluster)->pixels())[i]).y;
+    }
+  }
+}
+  // ------------------------ end of findClosestClusters ------------------------
+}
+  
+
 // Other useful things
 /*
   DetID == 344130820 || DetID == 344131844 || DetID == 344132868 
