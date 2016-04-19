@@ -8,6 +8,7 @@
  ************************************************************/
 
 // ----------------------------------------------------------------------------------------
+
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 
 #include "FWCore/Framework/interface/Event.h"
@@ -57,7 +58,6 @@
 #include "TrackingTools/TransientTrack/interface/TransientTrack.h"
 #include "TrackingTools/PatternTools/interface/TrajTrackAssociation.h"
 #include "RecoLocalTracker/ClusterParameterEstimator/interface/PixelClusterParameterEstimator.h"
-
 
 //#include "Geometry/TrackerTopology/interface/RectangularPixelTopology.h"
 #include "Geometry/TrackerGeometryBuilder/interface/RectangularPixelTopology.h"
@@ -110,7 +110,6 @@
 #include "TrackingTools/TransientTrackingRecHit/interface/TransientTrackingRecHitBuilder.h"
 #include "RecoTracker/TransientTrackingRecHit/interface/TkTransientTrackingRecHitBuilder.h"
 
-
 #define NOVAL_I -9999
 #define NOVAL_F -9999.0
 
@@ -159,11 +158,8 @@ class PilotBladeStudy : public edm::EDAnalyzer
   TTree* trackTree_;
   TTree* digiTree_;
   TTree* clustTree_;
-  TTree* trajTree_;
+//   TTree* trajTree_;
   TFile* outfile_;
-
-  std::map<size_t,int> wbc;
-  //std::map<size_t,int> globaldelay; //kesobb
 
   bool usePixelCPE_;
   bool isNewLS_;
@@ -173,7 +169,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
 
  public:
 
-  // Event info
+// ------------------------------- EventData info ------------------------------
   class EventData {
     public:
       int fill;
@@ -183,12 +179,6 @@ class PilotBladeStudy : public edm::EDAnalyzer
       int bx;
       int evt;
 
-      int nclu[4]; // [0: fpix, i: layer i]
-      int npix[4]; // [0: fpix, i: layer i]
-    
-      int wbc;
-      int delay;
-      int ntracks;
       int federrs_size;
       // must be the last variable of the object saved to TTree:
       int federrs[16][2]; // [error index] [0:Nerror, 1:errorType]
@@ -203,53 +193,16 @@ class PilotBladeStudy : public edm::EDAnalyzer
         orb=NOVAL_I;
         bx=NOVAL_I;
         evt=NOVAL_I;
-      
-        for (size_t i=0; i<4; i++) nclu[i]=npix[i]=NOVAL_I;
-      
-        wbc=NOVAL_I;
-        //delay=NOVAL_I;
-        ntracks=NOVAL_I;
+
         federrs_size=0;
         for (size_t i=0; i<16; i++) federrs[i][0]=federrs[i][1]=NOVAL_I;
 
-      
-      //list="fill/I:run/I:ls/I:orb/I:bx/I:evt/I:nclu[4]/I:npix[4]/I:intlumi/F:instlumi/F:"
-	//"wbc/I:delay/I:ntracks/I:federrs_size/I:federrs[federrs_size][2]";
-      list="fill/I:run/I:ls/I:orb/I:bx/I:evt/I:nclu[4]/I:npix[4]/I:"
-	"wbc/I:ntracks/I:federrs_size/I:federrs[federrs_size][2]";
+	list="fill/I:run/I:ls/I:orb/I:bx/I:evt/I:federrs_size/I:federrs[federrs_size][2]";
     }
   } evt_;
+// ---------------------------- end of Event info ------------------------
   
-  /*
-  // Lumi info
-  class LumiData {
-   public:
-    int fill;
-    int run;
-    int ls;
-    unsigned int time; // Unix time - seconds starting from 1970 Jan 01 00:00
-
-    float intlumi;
-    float instlumi;
-
-    std::string list;
-
-    LumiData() { init(); };
-    void init() {
-      fill=NOVAL_I;
-      run=NOVAL_I;
-      ls=NOVAL_I;
-      time=abs(NOVAL_I);
-      intlumi=NOVAL_F;
-      instlumi=NOVAL_F;
-
-      list="fill/I:run:ls:time/i:intlumi/F:instlumi/F";
-
-    }
-
-  } lumi_;
-*/
-  // Run info
+// ------------------------------- RunData info ------------------------------
   class RunData {
    public:
     int fill;
@@ -266,13 +219,16 @@ class PilotBladeStudy : public edm::EDAnalyzer
     }
 
   } run_;
-
-  // Track info
+// ---------------------------- end of Run info ----------------------------
+  
+// ------------------------------- TrackData info ------------------------------
   class TrackData {
    public:
+    int pixel;
+    int strip;
     float pt;
-    float ndof;
-    float chi2;
+    float dxy;
+    float dz;
     float eta;
     float phi;
 
@@ -280,23 +236,25 @@ class PilotBladeStudy : public edm::EDAnalyzer
    
     TrackData() { init(); }
     void init() {
-
+      pixel=NOVAL_I;
+      strip=NOVAL_I;
       pt=NOVAL_F;
-      ndof=NOVAL_F;
-			chi2=NOVAL_F;
+      dxy=NOVAL_F;
+      dz=NOVAL_F;      
       eta=NOVAL_F;
       phi=NOVAL_F;
 
-      list="pt/F:ndof/F:chi2/F:eta/F:phi/F";
+      list="pixel/I:strip/I:pt/F:dxy/F:dz/F:eta/F:phi/F";
     }
   };
 
   std::vector<TrackData> tracks_;
-
-  // Digi info
+// --------------------------- end of Track info ---------------------------  
+  
+// ------------------------------- DigiData info ------------------------------
   class DigiData {
    public:
-    int i; // serial num of digi in the given module
+    int i;
     int row;
     int col;
     int adc;
@@ -312,30 +270,17 @@ class PilotBladeStudy : public edm::EDAnalyzer
       list="i/I:row:col:adc";
     }
   };
+// ----------------------------- end of Digi info -----------------------------
 
-
-
-  // Cluster info
+// ------------------------------ ClusterData info ----------------------------
   class ClustData {
    public:
-    // Paired branches (SPLIT mode)
     float x;
     float y;
     float glx;
     float gly;
     float glz;
-    int sizeX;
-    int sizeY;
-
-    int i; // serial num of cluster in the given module
-    int edge;     // set if there is a valid hit
-    int size;
-    float charge;
-
-    float adc[1000];
-    float pixX[1000];
-    float pixY[1000];
-
+    
     std::string list;
 
     ClustData() { init(); }
@@ -345,20 +290,14 @@ class PilotBladeStudy : public edm::EDAnalyzer
       glx=NOVAL_F;
       gly=NOVAL_F;
       glz=NOVAL_F;
-      sizeX=NOVAL_I;
-      sizeY=NOVAL_I;
-      i=NOVAL_I;
-      edge=NOVAL_I;
-      size=0;
-      charge=NOVAL_F;
-      for (size_t i=0; i<1000; i++) { adc[i]=pixX[i]=pixY[i]=NOVAL_F; }
 
-
-      list="x/F:y/F:glx/F:gly/F:glz/F:sizeX/I:sizeY/I:i/I:edge/I:size/I:charge/F:adc[size]/F";
+      list="x/F:y/F:glx/F:gly/F:glz/F";
     }
     
   };
-  // Module info
+// --------------------------- end of ClusterData info ---------------------------- 
+  
+// ------------------------------ ModuleData info ---------------------------------
   class ModuleData {
    public:
     int det;
@@ -441,8 +380,9 @@ class PilotBladeStudy : public edm::EDAnalyzer
     }
     
   };
+// --------------------------- end of ModuleData info ---------------------------------
 
-  // Trajectory info
+// ------------------------------ TrajectoryData info ---------------------------------
   class TrajMeasData {
    public:
 
@@ -519,7 +459,11 @@ class PilotBladeStudy : public edm::EDAnalyzer
 	    "dx_cl[2]/F:dx_cl_corr[2]/F:dy_cl[2]/F:dy_cl_corr[2]/F:dx_hit/F:dy_hit/F:i/I:onEdge/I:type/I:lx_err/F:ly_err/F:d_cl[2]/F:alpha/F:beta/F:norm_charge/F";
     }
   };
-
+// -------------------------- end of TrajectoryData info ------------------------------  
+// ---------------------- end of *Data classes ----------------------
+  
+// ------------- from here we have the merged classes ---------------
+// -------------------------- Digi ----------------------------------
   class Digi : public DigiData {
    public:
 
@@ -579,6 +523,8 @@ class PilotBladeStudy : public edm::EDAnalyzer
     digis_.clear();
   }
 
+  
+// ------------------------------ Used functions ------------------------------  
   ModuleData getModuleData(uint32_t rawId, const std::map<uint32_t, int>& federrors, std::string scheme="offline");
 
   void ReadFEDErrors(const edm::Event&, const edm::EventSetup&, 
@@ -589,11 +535,12 @@ class PilotBladeStudy : public edm::EDAnalyzer
 		    edm::EDGetTokenT< edm::DetSetVector<PixelDigi> >, std::map<uint32_t, int>, 
 		    int, bool);
   void analyzeClusters(const edm::Event&, const edm::EventSetup&, 
-		       edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >, std::map<uint32_t, int>);
-  
-  int get_RocID_from_cluster_coords(const float&, const float&, const ModuleData&);
-  int get_RocID_from_local_coords(const float&, const float&, const ModuleData&);
-				
+		       edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >, std::map<uint32_t, int>,
+		       int, bool);
+  void analyzeTracks(const edm::Event&, const edm::EventSetup&, 
+		       edm::EDGetTokenT< TrajTrackAssociationCollection >, std::map<uint32_t, int>,
+		       int, bool);
+  				
   void findClosestClusters(const edm::Event&, const edm::EventSetup&, uint32_t, 
 			   float, float, float*, float*, 
 			   edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >, ClustData&);
