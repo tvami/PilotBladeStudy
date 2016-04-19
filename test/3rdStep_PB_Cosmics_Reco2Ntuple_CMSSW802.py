@@ -21,7 +21,7 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('DPGAnalysis.PilotBladeStudy.PilotBladeSetup_cfi')
 
 # ------------------- Input ----------------------------
-nEvents =  '2016CRUZET_All'
+nEvents =  '2Events'
 
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(-1)
