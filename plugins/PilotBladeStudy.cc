@@ -857,7 +857,6 @@ void PilotBladeStudy::findClosestClusters(
 // 	clu.pixY[i]=(((itClosestCluster)->pixels())[i]).y;
     }
   }
-}
   // ------------------------ end of findClosestClusters ------------------------
 }
   
