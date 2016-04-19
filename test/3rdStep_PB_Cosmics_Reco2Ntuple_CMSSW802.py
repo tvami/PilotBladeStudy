@@ -135,7 +135,7 @@ process.source = cms.Source("PoolSource",
 	'file:/data/vami/projects/pilotBlade/2016CosmicsProcessing/RECOs/April14/2Cosmics_Raw2Reco_PilotBlade_104.root',
 	'file:/data/vami/projects/pilotBlade/2016CosmicsProcessing/RECOs/April14/2Cosmics_Raw2Reco_PilotBlade_105.root',             
     ),
-    eventsToProcess = cms.untracked.VEventRange('269794:286802','269807:198295'),
+    #eventsToProcess = cms.untracked.VEventRange('269794:286802','269807:198295'),
     secondaryFileNames = cms.untracked.vstring()
 )
 
