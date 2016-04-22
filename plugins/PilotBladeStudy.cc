@@ -681,7 +681,7 @@ void PilotBladeStudy::analyzeTrajs(const edm::Event& iEvent,
 	TransientTrackingRecHit::ConstRecHitPointer recHit = itTraj->recHit();
 	uint subDetId = recHit->geographicalId().subdetId();
 	
-	if (DEBUGTrajs) std::cout << "detector ID: " << subDetId << std::endl;
+	if (verbosity>1) std::cout << "detector ID: " << subDetId << std::endl;
 	
 	// Cutting on which trajectories we process
 	if(recHit->geographicalId().det() != DetId::Tracker) continue;
@@ -743,6 +743,10 @@ void PilotBladeStudy::analyzeTrajs(const edm::Event& iEvent,
 			      meas.lx, meas.ly, meas.dx_cl, meas.dy_cl, 
                               PBClustersToken_, PBCluOnTrack);
 	  meas.clu = PBCluOnTrack;
+	  std::cout << " Position of the Pilot Blade RecHit (lx,ly): " 
+		    << meas.lx << "," << meas.ly << std::endl;
+	  std::cout << " Dx distance of the closest Pilot Blade cluster: " << meas.dx_cl << std::endl;
+	  std::cout << " Dy distance of the closest Pilot Blade cluster: " << meas.dy_cl << std::endl;
 	  if (meas.dx_cl != NOVAL_F) {
 	    meas.d_cl = sqrt(meas.dx_cl*meas.dx_cl+meas.dy_cl*meas.dy_cl);
 	  } else {
