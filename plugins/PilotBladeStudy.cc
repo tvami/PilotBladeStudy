@@ -160,10 +160,13 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   analyzeClusters(iEvent, iSetup, PBClustersToken_, federrors, 1, cosmicsCase);
   
   // ------------------------ Analyze tracks -----------------------
-  analyzeTracks(iEvent, iSetup, trajTrackCollToken_, federrors, 1, cosmicsCase); 
+  analyzeTracks(iEvent, iSetup, trajTrackCollToken_, federrors, 0, cosmicsCase); 
   
   // --------------------- Analyze trajectories --------------------
   analyzeTrajs(iEvent, iSetup, trajTrackCollToken_, federrors, 1, cosmicsCase); 
+  std::cout << "Number of PB Hits: " << nPBHit << " out of " 
+	    << nPixelHit << " Pixel hit and " << nStripHit
+	    << " Strip hit in the events so far. " << std::endl;
   // ---------------------------------------------------------------
     
   // ---------------------- Filling the trees ----------------------
@@ -210,13 +213,15 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
 //   trajTree_->SetBranchAddress("clust_pixX", &traj.clu.pixX);
 //   trajTree_->SetBranchAddress("clust_pixY", &traj.clu.pixY);
   trajTree_->SetBranchAddress("track",      &traj.trk);
+  traj.nPixelHit = nPixelHit;
+  traj.nStripHit = nStripHit;
+  traj.nPBHit    = nPBHit;
   for (size_t itrk=0; itrk<trajmeas_.size(); itrk++) {
     for (size_t i=0; i<trajmeas_[itrk].size(); i++) {
       float minD=10000.;
       for (size_t jtrk=0; jtrk<trajmeas_.size(); jtrk++) {
 	for (size_t j=0; j<trajmeas_[jtrk].size(); j++) {
 	  if (jtrk==itrk && j==i) continue;
-	  // Calculationg the minimum distance between two rechits
 	  float dx_hit=fabs(trajmeas_[itrk][i].lx-trajmeas_[jtrk][j].lx);
 	  float dy_hit=fabs(trajmeas_[itrk][i].ly-trajmeas_[jtrk][j].ly);
 	  float D=sqrt(dx_hit*dx_hit+dy_hit*dy_hit);
@@ -224,7 +229,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
 	    minD=D;
 	  }
 	}
-      }      
+      }
       trajmeas_[itrk][i].d_hit = minD;
       traj = trajmeas_[itrk][i];
       trajTree_->Fill();
@@ -569,6 +574,9 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
         clust.glx = gp.x();
         clust.gly = gp.y();
         clust.glz = gp.z();
+	
+	clust.size=itCluster->size();
+        clust.charge=itCluster->charge()/1000.0;
         
         clust.mod    = getModuleData(detId.rawId(), federrors);
         clust.mod_on = getModuleData(detId.rawId(), federrors, "online");
@@ -606,13 +614,13 @@ void PilotBladeStudy::analyzeTracks(const edm::Event& iEvent,
       const Track&      track = *itTrajTrack->val;
       
       TrackData track_;
-      track_.nPixelHit=0;
-      track_.nStripHit=0;
-      track_.pt=track.pt();
-      track_.dxy=track.dxy();
-      track_.dz=track.dz();
-      track_.eta=track.eta();
-      track_.phi=track.phi();
+      track_.nPixelHit = 0;
+      track_.nStripHit = 0;
+      track_.pt  = track.pt();
+      track_.dxy = track.dxy();
+      track_.dz  = track.dz();
+      track_.eta = track.eta();
+      track_.phi = track.phi();
       
       std::vector<TrajectoryMeasurement> trajMeasurements = traj.measurements();
       std::vector<TrajectoryMeasurement>::const_iterator itTraj;
@@ -651,9 +659,8 @@ void PilotBladeStudy::analyzeTrajs(const edm::Event& iEvent,
   
   if (!trajTrackCollectionHandle.isValid()) {
     std::cout << "trajTrackCollectionHandle is not valid, exiting the loop" << std::endl;
-  } else {
-    if (DEBUGTrajs) std::cout << " Run " << evt_.run << " Event " << evt_.evt;
-    if (DEBUGTrajs) std::cout << " Number of tracks = " << trajTrackCollectionHandle->size() << std::endl;
+  } else if ((trajTrackCollectionHandle->size())!=0){
+    if (DEBUGTrajs) std::cout << "Number of tracks = " << trajTrackCollectionHandle->size() << std::endl;
 
      // --------------------- loop on the trajTrackCollection ----------------------
     TrajTrackAssociationCollection::const_iterator itTrajTrack=trajTrackCollectionHandle->begin();
@@ -663,14 +670,14 @@ void PilotBladeStudy::analyzeTrajs(const edm::Event& iEvent,
       TrajectoryStateCombiner trajStateComb;
       
       // ----------------------- loop on the trajMeasurements -----------------------
+
       std::vector<TrajectoryMeasurement> trajMeasurements = traj.measurements();
       std::vector<TrajectoryMeasurement>::const_iterator itTraj;
       std::vector<TrajMeasurement> trajmeas; 
+      TrajMeasurement meas;
       
       for(itTraj=trajMeasurements.begin(); itTraj!=trajMeasurements.end(); ++itTraj) {
 	
-
-	TrajMeasurement meas;
 	TransientTrackingRecHit::ConstRecHitPointer recHit = itTraj->recHit();
 	uint subDetId = recHit->geographicalId().subdetId();
 	
@@ -686,21 +693,19 @@ void PilotBladeStudy::analyzeTrajs(const edm::Event& iEvent,
                 
         meas.mod    = getModuleData(recHit->geographicalId().rawId(), federrors);
         meas.mod_on = getModuleData(recHit->geographicalId().rawId(), federrors, "online");
-	
+		
 	// Hit type codes: valid = 0, missing = 1, inactive = 2
 	if 	(recHit->getType() == TrackingRecHit::valid) 	meas.type=0;
         else if (recHit->getType() == TrackingRecHit::missing) 	meas.type=1;
         else if (recHit->getType() == TrackingRecHit::inactive) meas.type=2;
 	
-	if (recHit->isValid()) {
-	  if      (subDetId == PixelSubdetector::PixelBarrel) meas.nPixelHit++;
-	  else if (subDetId == PixelSubdetector::PixelEndcap) meas.nPixelHit++;
-	  else if (subDetId == StripSubdetector::TIB) meas.nStripHit++;
-	  else if (subDetId == StripSubdetector::TOB) meas.nStripHit++;
-	  else if (subDetId == StripSubdetector::TID) meas.nStripHit++;
-	  else if (subDetId == StripSubdetector::TEC) meas.nStripHit++;
-	}
-	
+	if      (subDetId == PixelSubdetector::PixelBarrel) nPixelHit++;
+	else if (subDetId == PixelSubdetector::PixelEndcap) nPixelHit++;
+	else if (subDetId == StripSubdetector::TIB) nStripHit++;
+	else if (subDetId == StripSubdetector::TOB) nStripHit++;
+	else if (subDetId == StripSubdetector::TID) nStripHit++;
+	else if (subDetId == StripSubdetector::TEC) nStripHit++;
+
 	TrajectoryStateOnSurface predTrajState=trajStateComb(itTraj->forwardPredictedState(),
                                                                itTraj->backwardPredictedState());       
 	
@@ -713,8 +718,6 @@ void PilotBladeStudy::analyzeTrajs(const edm::Event& iEvent,
         meas.gly=predTrajState.globalPosition().y();
         meas.glz=predTrajState.globalPosition().z();
 	
-
-          
         meas.onEdge=1;
         if (fabs(meas.lx)<0.55 && fabs(meas.ly)<3.0) {
           meas.onEdge=0;         
@@ -731,10 +734,11 @@ void PilotBladeStudy::analyzeTrajs(const edm::Event& iEvent,
 	      std::cout << "***************************\n** PilotBlade hit found! **"<< std::endl;
 	      std::cout << "***************************" << std::endl;
 	  }
-	  meas.nPBHits++;
+	  nPBHit++;
 	  
 	  // Finding the closest cluster and filling it's properties
 	  ClustData PBCluOnTrack;
+          std::cout << " Finding the closest Pilot Blade cluster " << std::endl;
 	  findClosestClusters(iEvent, iSetup, recHit->geographicalId().rawId(),
 			      meas.lx, meas.ly, meas.dx_cl, meas.dy_cl, 
                               PBClustersToken_, PBCluOnTrack);
@@ -743,13 +747,8 @@ void PilotBladeStudy::analyzeTrajs(const edm::Event& iEvent,
 	    meas.d_cl = sqrt(meas.dx_cl*meas.dx_cl+meas.dy_cl*meas.dy_cl);
 	  } else {
 	    meas.d_cl = NOVAL_F;
-	  } 
+	  }
 	}
-	std::cout << "Number of PB Hits: " << meas.nPBHits << " out of " 
-	<< meas.nPixelHit << " Pixel hit in the events so far. " << std::endl;
-	
-	
-  
 	trajmeas.push_back(meas);         
       }
       trajmeas_.push_back(trajmeas);
@@ -817,7 +816,6 @@ void PilotBladeStudy::findClosestClusters(
       continue;
     }
     
-    // Iterate on the clusters in the cluster set
     edmNew::DetSet<SiPixelCluster>::const_iterator itCluster=itClusterSet->begin();
     edmNew::DetSet<SiPixelCluster>::const_iterator itClosestCluster=itClusterSet->begin();
     
@@ -830,7 +828,6 @@ void PilotBladeStudy::findClosestClusters(
 	if (DEBUGfindClust) std::cout << "PixelClusterParameterEstimator: " << lp << std::endl;
       }
       
-      // Calculation the minimum distance of the rechit and the cluster
       float D = sqrt((lp.x()-lx)*(lp.x()-lx)+(lp.y()-ly)*(lp.y()-ly));
       if (DEBUGfindClust) std::cout << "Value of the D: " << D << std::endl; 
       if (D<minD) {
@@ -847,7 +844,6 @@ void PilotBladeStudy::findClosestClusters(
     }
     
     if (minD<9999.) {
-    	// Charge & others will be needed in a minute
 //       clu.charge=(itClosestCluster)->charge()/1000.0;
 //       clu.size=(itClosestCluster)->size();
 //       clu.edge=NOVAL_F;
