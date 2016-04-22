@@ -163,6 +163,10 @@ class PilotBladeStudy : public edm::EDAnalyzer
 
   bool usePixelCPE_;
   bool isNewLS_;
+  
+  int nPixelHit = 0;
+  int nStripHit = 0;
+  int nPBHit    = 0;
     
  public:
 
@@ -278,6 +282,9 @@ class PilotBladeStudy : public edm::EDAnalyzer
     float gly;
     float glz;
     
+    int size;
+    float charge;
+    
     std::string list;
 
     ClustData() { init(); }
@@ -287,8 +294,11 @@ class PilotBladeStudy : public edm::EDAnalyzer
       glx=NOVAL_F;
       gly=NOVAL_F;
       glz=NOVAL_F;
+      
+      size=0;
+      charge=NOVAL_F;
 
-      list="x/F:y/F:glx/F:gly/F:glz/F";
+      list="x/F:y/F:glx/F:gly/F:glz/F:size/I:charge/F";
     }
     
   };
@@ -386,7 +396,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
     
     int nPixelHit;
     int nStripHit;
-    int nPBHits;
+    int nPBHit;
     
     float lx;
     float ly;
@@ -419,9 +429,9 @@ class PilotBladeStudy : public edm::EDAnalyzer
     void init() {
       type=NOVAL_I;
       
-      nPixelHit=NOVAL_I;
-      nStripHit=NOVAL_I;
-      nPBHits=NOVAL_I;
+      nPixelHit = NOVAL_I;
+      nStripHit = NOVAL_I;
+      nPBHit    = NOVAL_I;
       
       lx=NOVAL_F;
       ly=NOVAL_F;
@@ -450,7 +460,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
 //       "dx_cl[2]/F:dx_cl_corr[2]/F:dy_cl[2]/F:dy_cl_corr[2]/F:dx_hit/F:dy_hit/F:"
 //       "i/I:onEdge/I:type/I:lx_err/F:ly_err/F:d_cl[2]/F:alpha/F:beta/F:norm_charge/F";
       
-      list="type/I:nPixelHit/I:nStripHit/I:nPBHits/I:lx/F:ly/F:lx_err/F:ly_err/F:glx/F:gly/F:glz/F:"
+      list="type/I:nPixelHit/I:nStripHit/I:nPBHit/I:lx/F:ly/F:lx_err/F:ly_err/F:glx/F:gly/F:glz/F:"
       "onEdge/I:alpha/F:beta/F:dx_cl/F:dy_cl/F:d_cl/F:dx_hit/F:dy_hit/F:d_hit/F";
     }
   };
