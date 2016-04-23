@@ -160,6 +160,9 @@ class PilotBladeStudy : public edm::EDAnalyzer
   TTree* clustTree_;
   TTree* trajTree_;
   TFile* outfile_;
+  
+  std::map<size_t,int> wbc;
+  std::map<size_t,int> delay;
 
   bool usePixelCPE_;
   bool isNewLS_;
@@ -179,9 +182,11 @@ class PilotBladeStudy : public edm::EDAnalyzer
       int orb;
       int bx;
       int evt;
+      
+      int wbc;
+      int delay;
 
       int federrs_size;
-      // must be the last variable of the object saved to TTree:
       int federrs[16][2]; // [error index] [0:Nerror, 1:errorType]
     
       std::string list;
@@ -194,11 +199,14 @@ class PilotBladeStudy : public edm::EDAnalyzer
         orb=NOVAL_I;
         bx=NOVAL_I;
         evt=NOVAL_I;
+	
+	wbc=NOVAL_I;
+	delay=NOVAL_I;
 
         federrs_size=0;
         for (size_t i=0; i<16; i++) federrs[i][0]=federrs[i][1]=NOVAL_I;
 
-	list="fill/I:run/I:ls/I:orb/I:bx/I:evt/I:federrs_size/I:federrs[federrs_size][2]";
+	list="fill/I:run/I:ls/I:orb/I:bx/I:evt/I:wbc/I:delay/I:federrs_size/I:federrs[federrs_size][2]";
     }
   } evt_;
 // ---------------------------- end of Event info ------------------------
@@ -532,7 +540,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
 // ------------------------------ Used functions ------------------------------  
   ModuleData getModuleData(uint32_t rawId, const std::map<uint32_t, int>& federrors, std::string scheme="offline");
 
-  void ReadFEDErrors(const edm::Event&, const edm::EventSetup&, 
+  void readFEDErrors(const edm::Event&, const edm::EventSetup&, 
 		     edm::EDGetTokenT< edm::DetSetVector<SiPixelRawDataError> >, 
 		     edm::EDGetTokenT< edm::EDCollection<DetId> >, std::map<uint32_t, int>);
   
@@ -552,6 +560,8 @@ class PilotBladeStudy : public edm::EDAnalyzer
   void findClosestClusters(const edm::Event&, const edm::EventSetup&, uint32_t, 
 			   float, float, float, float, 
 			   edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >, ClustData&);
+  
+  void readExtraInfos();
 			    
 
 };
