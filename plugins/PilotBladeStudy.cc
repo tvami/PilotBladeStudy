@@ -146,10 +146,15 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   evt_.orb  = iEvent.orbitNumber();
   evt_.bx   = iEvent.bunchCrossing();
   evt_.evt  = iEvent.id().event();
+  
+  // ----------------------- Read Extra Infos -----------------------
+  readExtraInfos();
+  evt_.wbc=wbc[iEvent.id().run()];
+  evt_.delay=delay[iEvent.id().run()];
 
   // ----------------------- Read FED errors -----------------------
   std::map<uint32_t, int> federrors;
-  ReadFEDErrors(iEvent, iSetup, SiPixelRawDataErrorToken_, trackingErrorToken_, federrors);
+  readFEDErrors(iEvent, iSetup, SiPixelRawDataErrorToken_, trackingErrorToken_, federrors);
   
   // ----------------------- Analyze digis -----------------------
   analyzeDigis(iEvent, iSetup, siPixelDigisToken_, federrors, 0, cosmicsCase);
@@ -357,8 +362,8 @@ PilotBladeStudy::ModuleData PilotBladeStudy::getModuleData
 }
 // ---------------------------- end of getModuleData --------------------------
 
-// ------------------------------ ReadFEDErrors -------------------------------
-void PilotBladeStudy::ReadFEDErrors(const edm::Event& iEvent, 
+// ------------------------------ readFEDErrors -------------------------------
+void PilotBladeStudy::readFEDErrors(const edm::Event& iEvent, 
                                     const edm::EventSetup& iSetup, 
 				    edm::EDGetTokenT< edm::DetSetVector<SiPixelRawDataError> > RawDataErrorToken_,
 				    edm::EDGetTokenT< edm::EDCollection<DetId> > trackingErrorToken_,
@@ -440,7 +445,7 @@ void PilotBladeStudy::ReadFEDErrors(const edm::Event& iEvent,
     }
   } 
 }
-// ---------------------------- end of ReadFEDErrors --------------------------
+// ---------------------------- end of readFEDErrors --------------------------
 
 // ------------------------------ analyzeDigis -----------------------------
 
@@ -848,8 +853,8 @@ void PilotBladeStudy::findClosestClusters(
     }
     
     if (minD<9999.) {
-//       clu.charge=(itClosestCluster)->charge()/1000.0;
-//       clu.size=(itClosestCluster)->size();
+       clu.charge=(itClosestCluster)->charge()/1000.0;
+       clu.size=(itClosestCluster)->size();
 //       clu.edge=NOVAL_F;
 //       clu.sizeX=(itClosestCluster)->sizeX();
 //       clu.sizeY=(itClosestCluster)->sizeY();
@@ -861,9 +866,251 @@ void PilotBladeStudy::findClosestClusters(
 // 	clu.pixY[i]=(((itClosestCluster)->pixels())[i]).y;
     }
   }
-  // ------------------------ end of findClosestClusters ------------------------
 }
+// ------------------------ end of findClosestClusters ------------------------
+ 
+// ----------------------------- readExtraInfos -------------------------------
   
+void PilotBladeStudy::readExtraInfos(){
+  wbc.insert(std::pair<size_t,int>(265352,167)); 
+  wbc.insert(std::pair<size_t,int>(265354,167)); 
+  wbc.insert(std::pair<size_t,int>(265356,167)); 
+  wbc.insert(std::pair<size_t,int>(265362,167)); 
+  wbc.insert(std::pair<size_t,int>(265363,167)); 
+  wbc.insert(std::pair<size_t,int>(265365,167)); 
+  wbc.insert(std::pair<size_t,int>(265366,167)); 
+  wbc.insert(std::pair<size_t,int>(265367,167)); 
+  wbc.insert(std::pair<size_t,int>(265368,167)); 
+  wbc.insert(std::pair<size_t,int>(265371,167)); 
+  wbc.insert(std::pair<size_t,int>(265372,167)); 
+  wbc.insert(std::pair<size_t,int>(265373,167)); 
+  wbc.insert(std::pair<size_t,int>(265374,167)); 
+  wbc.insert(std::pair<size_t,int>(265375,167)); 
+  wbc.insert(std::pair<size_t,int>(265377,167)); 
+  wbc.insert(std::pair<size_t,int>(265378,167)); 
+  wbc.insert(std::pair<size_t,int>(265379,167)); 
+  wbc.insert(std::pair<size_t,int>(265380,167)); 
+  wbc.insert(std::pair<size_t,int>(265381,167)); 
+  wbc.insert(std::pair<size_t,int>(265382,167)); 
+  wbc.insert(std::pair<size_t,int>(265383,167)); 
+  wbc.insert(std::pair<size_t,int>(265384,167)); 
+  wbc.insert(std::pair<size_t,int>(265385,167)); 
+  wbc.insert(std::pair<size_t,int>(265386,167)); 
+  wbc.insert(std::pair<size_t,int>(265388,167)); 
+  wbc.insert(std::pair<size_t,int>(265394,167)); 
+  wbc.insert(std::pair<size_t,int>(265639,168)); 
+  wbc.insert(std::pair<size_t,int>(265641,168)); 
+  wbc.insert(std::pair<size_t,int>(265645,168)); 
+  wbc.insert(std::pair<size_t,int>(265647,168)); 
+  wbc.insert(std::pair<size_t,int>(265648,168)); 
+  wbc.insert(std::pair<size_t,int>(265649,168)); 
+  wbc.insert(std::pair<size_t,int>(265651,168)); 
+  wbc.insert(std::pair<size_t,int>(265653,168)); 
+  wbc.insert(std::pair<size_t,int>(265655,168)); 
+  wbc.insert(std::pair<size_t,int>(266527,165)); 
+  wbc.insert(std::pair<size_t,int>(266528,165)); 
+  wbc.insert(std::pair<size_t,int>(266529,165)); 
+  wbc.insert(std::pair<size_t,int>(266530,165)); 
+  wbc.insert(std::pair<size_t,int>(266531,165)); 
+  wbc.insert(std::pair<size_t,int>(266532,165)); 
+  wbc.insert(std::pair<size_t,int>(266533,165)); 
+  wbc.insert(std::pair<size_t,int>(266534,165)); 
+  wbc.insert(std::pair<size_t,int>(266535,165)); 
+  wbc.insert(std::pair<size_t,int>(266536,165)); 
+  wbc.insert(std::pair<size_t,int>(266537,165)); 
+  wbc.insert(std::pair<size_t,int>(266538,165)); 
+  wbc.insert(std::pair<size_t,int>(266539,165)); 
+  wbc.insert(std::pair<size_t,int>(266540,165)); 
+  wbc.insert(std::pair<size_t,int>(266541,165)); 
+  wbc.insert(std::pair<size_t,int>(266542,165)); 
+  wbc.insert(std::pair<size_t,int>(266543,165)); 
+  wbc.insert(std::pair<size_t,int>(266544,165)); 
+  wbc.insert(std::pair<size_t,int>(266545,165)); 
+  wbc.insert(std::pair<size_t,int>(266546,165)); 
+  wbc.insert(std::pair<size_t,int>(266547,165)); 
+  wbc.insert(std::pair<size_t,int>(266548,165)); 
+  wbc.insert(std::pair<size_t,int>(266549,165)); 
+  wbc.insert(std::pair<size_t,int>(266550,165)); 
+  wbc.insert(std::pair<size_t,int>(266551,165)); 
+  wbc.insert(std::pair<size_t,int>(266552,165)); 
+  wbc.insert(std::pair<size_t,int>(266553,165)); 
+  wbc.insert(std::pair<size_t,int>(266554,165)); 
+  wbc.insert(std::pair<size_t,int>(266555,165)); 
+  wbc.insert(std::pair<size_t,int>(266556,165)); 
+  wbc.insert(std::pair<size_t,int>(266136,166)); 
+  wbc.insert(std::pair<size_t,int>(266137,166)); 
+  wbc.insert(std::pair<size_t,int>(266138,166)); 
+  wbc.insert(std::pair<size_t,int>(266139,166)); 
+  wbc.insert(std::pair<size_t,int>(266140,166)); 
+  wbc.insert(std::pair<size_t,int>(266141,166)); 
+  wbc.insert(std::pair<size_t,int>(266142,166)); 
+  wbc.insert(std::pair<size_t,int>(266143,166)); 
+  wbc.insert(std::pair<size_t,int>(266144,166)); 
+  wbc.insert(std::pair<size_t,int>(266145,166)); 
+  wbc.insert(std::pair<size_t,int>(266146,166)); 
+  wbc.insert(std::pair<size_t,int>(266147,166)); 
+  wbc.insert(std::pair<size_t,int>(266148,166)); 
+  wbc.insert(std::pair<size_t,int>(266149,166)); 
+  wbc.insert(std::pair<size_t,int>(266150,166)); 
+  wbc.insert(std::pair<size_t,int>(266151,166)); 
+  wbc.insert(std::pair<size_t,int>(266152,166)); 
+  wbc.insert(std::pair<size_t,int>(266153,166)); 
+  wbc.insert(std::pair<size_t,int>(266154,166)); 
+  wbc.insert(std::pair<size_t,int>(266155,166)); 
+  wbc.insert(std::pair<size_t,int>(266271,167)); 
+  wbc.insert(std::pair<size_t,int>(266272,167)); 
+  wbc.insert(std::pair<size_t,int>(266273,167)); 
+  wbc.insert(std::pair<size_t,int>(266274,167)); 
+  wbc.insert(std::pair<size_t,int>(266275,167)); 
+  wbc.insert(std::pair<size_t,int>(266276,167)); 
+  wbc.insert(std::pair<size_t,int>(266277,167)); 
+  wbc.insert(std::pair<size_t,int>(266278,167)); 
+  wbc.insert(std::pair<size_t,int>(266423,168)); 
+  wbc.insert(std::pair<size_t,int>(266424,168)); 
+  wbc.insert(std::pair<size_t,int>(266665,169)); 
+  wbc.insert(std::pair<size_t,int>(266666,169)); 
+  wbc.insert(std::pair<size_t,int>(266667,169)); 
+  wbc.insert(std::pair<size_t,int>(266668,169)); 
+  wbc.insert(std::pair<size_t,int>(266669,169)); 
+  wbc.insert(std::pair<size_t,int>(266670,169)); 
+  wbc.insert(std::pair<size_t,int>(266671,169)); 
+  wbc.insert(std::pair<size_t,int>(266672,169)); 
+  wbc.insert(std::pair<size_t,int>(266673,169)); 
+  wbc.insert(std::pair<size_t,int>(266674,169)); 
+  wbc.insert(std::pair<size_t,int>(266675,169)); 
+  wbc.insert(std::pair<size_t,int>(266676,169)); 
+  wbc.insert(std::pair<size_t,int>(266677,169)); 
+  wbc.insert(std::pair<size_t,int>(266678,169)); 
+  wbc.insert(std::pair<size_t,int>(266679,169)); 
+  wbc.insert(std::pair<size_t,int>(266680,169)); 
+  wbc.insert(std::pair<size_t,int>(266681,169)); 
+  wbc.insert(std::pair<size_t,int>(266682,169)); 
+  wbc.insert(std::pair<size_t,int>(266683,169)); 
+  wbc.insert(std::pair<size_t,int>(266684,169)); 
+    //March21
+  wbc.insert(std::pair<size_t,int>(267323,168)); 
+  wbc.insert(std::pair<size_t,int>(267329,168)); 
+  wbc.insert(std::pair<size_t,int>(267330,168)); 
+  wbc.insert(std::pair<size_t,int>(267335,168)); 
+  wbc.insert(std::pair<size_t,int>(267337,168)); 
+  wbc.insert(std::pair<size_t,int>(267341,168)); 
+  wbc.insert(std::pair<size_t,int>(267349,168)); 
+  wbc.insert(std::pair<size_t,int>(267354,168)); 
+  wbc.insert(std::pair<size_t,int>(267356,168)); 
+  wbc.insert(std::pair<size_t,int>(267357,168)); 
+  wbc.insert(std::pair<size_t,int>(267362,168)); 
+  wbc.insert(std::pair<size_t,int>(267363,168)); 
+  wbc.insert(std::pair<size_t,int>(267364,168)); 
+  wbc.insert(std::pair<size_t,int>(267367,168)); 
+  wbc.insert(std::pair<size_t,int>(267368,168)); 
+  wbc.insert(std::pair<size_t,int>(267370,168)); 
+  wbc.insert(std::pair<size_t,int>(267371,168)); 
+  wbc.insert(std::pair<size_t,int>(267372,168)); 
+  wbc.insert(std::pair<size_t,int>(267373,168)); 
+  wbc.insert(std::pair<size_t,int>(267374,168)); 
+  wbc.insert(std::pair<size_t,int>(267375,168)); 
+  wbc.insert(std::pair<size_t,int>(267376,168)); 
+  wbc.insert(std::pair<size_t,int>(267377,168)); 
+  wbc.insert(std::pair<size_t,int>(267380,168)); 
+  wbc.insert(std::pair<size_t,int>(267382,168)); 
+  wbc.insert(std::pair<size_t,int>(267389,168)); 
+  wbc.insert(std::pair<size_t,int>(267391,168)); 
+    //March22
+  wbc.insert(std::pair<size_t,int>(267403,168));
+  wbc.insert(std::pair<size_t,int>(267410,168));
+  wbc.insert(std::pair<size_t,int>(267414,168));
+  wbc.insert(std::pair<size_t,int>(267417,168));
+  wbc.insert(std::pair<size_t,int>(267431,168));
+  wbc.insert(std::pair<size_t,int>(267444,168));
+  wbc.insert(std::pair<size_t,int>(267446,168));
+  wbc.insert(std::pair<size_t,int>(267461,168));
+  wbc.insert(std::pair<size_t,int>(267462,168));
+  wbc.insert(std::pair<size_t,int>(267473,168));
+  wbc.insert(std::pair<size_t,int>(267499,168));
+  wbc.insert(std::pair<size_t,int>(267510,168));
+  wbc.insert(std::pair<size_t,int>(267513,168));
+  wbc.insert(std::pair<size_t,int>(267533,168));
+  wbc.insert(std::pair<size_t,int>(267537,168));
+  wbc.insert(std::pair<size_t,int>(267543,168));
+  wbc.insert(std::pair<size_t,int>(267552,168));
+  wbc.insert(std::pair<size_t,int>(267558,168));
+  wbc.insert(std::pair<size_t,int>(267565,168));
+  wbc.insert(std::pair<size_t,int>(267567,168));
+  wbc.insert(std::pair<size_t,int>(267579,168));
+  wbc.insert(std::pair<size_t,int>(267580,168));
+  wbc.insert(std::pair<size_t,int>(267582,168));
+  wbc.insert(std::pair<size_t,int>(267586,168));
+  wbc.insert(std::pair<size_t,int>(267587,168));
+  wbc.insert(std::pair<size_t,int>(267588,168));
+  wbc.insert(std::pair<size_t,int>(267589,168));
+  wbc.insert(std::pair<size_t,int>(267590,168));
+  wbc.insert(std::pair<size_t,int>(267591,168));
+  wbc.insert(std::pair<size_t,int>(267593,168));
+  wbc.insert(std::pair<size_t,int>(267594,168));
+  wbc.insert(std::pair<size_t,int>(267595,168));
+  wbc.insert(std::pair<size_t,int>(267597,168));
+  wbc.insert(std::pair<size_t,int>(267598,168));
+    //March23
+  wbc.insert(std::pair<size_t,int>(267599,168)); 
+  wbc.insert(std::pair<size_t,int>(267600,168)); 
+  wbc.insert(std::pair<size_t,int>(267602,168)); 
+  wbc.insert(std::pair<size_t,int>(267603,168)); 
+  wbc.insert(std::pair<size_t,int>(267697,168)); 
+  wbc.insert(std::pair<size_t,int>(267708,168)); 
+  wbc.insert(std::pair<size_t,int>(267712,168)); 
+  wbc.insert(std::pair<size_t,int>(267713,168)); 
+  wbc.insert(std::pair<size_t,int>(267716,168)); 
+  wbc.insert(std::pair<size_t,int>(267722,168)); 
+  wbc.insert(std::pair<size_t,int>(267726,168)); 
+  wbc.insert(std::pair<size_t,int>(267727,168)); 
+  wbc.insert(std::pair<size_t,int>(267729,168)); 
+  wbc.insert(std::pair<size_t,int>(267732,168)); 
+  wbc.insert(std::pair<size_t,int>(267742,168)); 
+  wbc.insert(std::pair<size_t,int>(267744,168)); 
+  wbc.insert(std::pair<size_t,int>(267748,168)); 
+  wbc.insert(std::pair<size_t,int>(267749,168)); 
+  wbc.insert(std::pair<size_t,int>(267750,168)); 
+  wbc.insert(std::pair<size_t,int>(267754,168)); 
+  wbc.insert(std::pair<size_t,int>(267755,168)); 
+  wbc.insert(std::pair<size_t,int>(267756,168)); 
+  wbc.insert(std::pair<size_t,int>(267757,168)); 
+  wbc.insert(std::pair<size_t,int>(267758,168)); 
+  wbc.insert(std::pair<size_t,int>(267759,168)); 
+  wbc.insert(std::pair<size_t,int>(267760,168)); 
+  wbc.insert(std::pair<size_t,int>(267761,168)); 
+  wbc.insert(std::pair<size_t,int>(267767,168)); 
+  wbc.insert(std::pair<size_t,int>(267779,168)); 
+  wbc.insert(std::pair<size_t,int>(267780,168)); 
+  wbc.insert(std::pair<size_t,int>(267781,168)); 
+  wbc.insert(std::pair<size_t,int>(267782,168)); 
+  wbc.insert(std::pair<size_t,int>(267783,168)); 
+  wbc.insert(std::pair<size_t,int>(267784,168)); 
+  wbc.insert(std::pair<size_t,int>(267785,168)); 
+  wbc.insert(std::pair<size_t,int>(267786,168)); 
+  wbc.insert(std::pair<size_t,int>(267787,168)); 
+  wbc.insert(std::pair<size_t,int>(267788,168)); 
+  wbc.insert(std::pair<size_t,int>(267789,168)); 
+  wbc.insert(std::pair<size_t,int>(267792,168)); 
+  wbc.insert(std::pair<size_t,int>(267794,168)); 
+  wbc.insert(std::pair<size_t,int>(267795,168)); 
+  wbc.insert(std::pair<size_t,int>(267798,168)); 
+  wbc.insert(std::pair<size_t,int>(267800,168)); 
+  wbc.insert(std::pair<size_t,int>(267803,168)); 
+  wbc.insert(std::pair<size_t,int>(267859,168)); 
+  wbc.insert(std::pair<size_t,int>(267872,168)); 
+  wbc.insert(std::pair<size_t,int>(267876,168)); 
+  wbc.insert(std::pair<size_t,int>(267877,168)); 
+  wbc.insert(std::pair<size_t,int>(267878,168)); 
+  wbc.insert(std::pair<size_t,int>(267890,168)); 
+  // April 13
+  wbc.insert(std::pair<size_t,int>(269794,168)); 
+  wbc.insert(std::pair<size_t,int>(269805,168)); 
+  wbc.insert(std::pair<size_t,int>(269805,168)); 
+  wbc.insert(std::pair<size_t,int>(269807,168)); 
+  
+  delay.insert(std::pair<size_t,int>(269807,24));
+}
+// ------------------------ end of readExtraInfos ------------------------
 
 // Other useful things
 /*
