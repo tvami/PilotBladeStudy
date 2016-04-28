@@ -64,18 +64,9 @@ int delay(uint run, const uint ls) {
     }
   }
   if (run==271306) {
-    if (ls<98) {
-      delay=54; 
-      return delay;
-    }
-    if (ls<118) {
-      delay=52; 
-      return delay;
-    }
-    else {
-      delay=49; 
-      return delay;
-    }
+    if (ls<98)  { delay=54; return delay; }
+    if (ls<118) { delay=52; return delay; }
+    else        { delay=49; return delay; }
   }
   if (run==271307) {
     delay=49;
