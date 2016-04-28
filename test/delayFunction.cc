@@ -1,5 +1,6 @@
 int delay(uint run, const uint ls) {
   int delay=-9999;
+
   if (run==271056) {
     if (ls<58)  { delay=37; return delay; }
     if (ls<81)  { delay=12; return delay; }
@@ -11,6 +12,15 @@ int delay(uint run, const uint ls) {
   if (run==271084) { 
     delay=12; return delay; 
   } 
+  if (run==271136 || run==271142 || run==271143 || run==271144 || run==271151) {
+    delay=12; return delay;
+  }
+  if (run==271153 || run==271155 || run==271161 || run==271167 || run==271168) {
+    delay=12; return delay;
+  }
+  if (run==271169 || run==271170 || run==271176 || run==271177) {
+    delay=12; return delay;
+  }
   if (run==271188) { 
     delay=49; return delay; 
   } 
@@ -45,13 +55,22 @@ int delay(uint run, const uint ls) {
     else 	{ delay=64; return delay; }
   }
   if (run==271197) {
-    if (ls<5)	{ delay=64; return delay; } // this is not the same as in the log from Aurelejus
+    if (ls<5)	{ delay=64; return delay; } // this is not the same as in the log from Aurelejus (there it is 49) 
     else 	{ delay=60; return delay; }
   }
   if (run==271214) {
     if (ls<18)  { delay=60; return delay; } // Aurelejus doesn't have this
     if (ls<51)	{ delay=58; return delay; }
     else 	{ delay=56; return delay; }
+  }
+  if (run==271215 || run==271216 || run==271221 || run==271224 || run==271230) {
+    delay=54; return delay;
+  }
+  if (run==271234 || run==271244 || run==271245 || run==271248 || run==271250) {
+    delay=49; return delay;
+  }
+  if (run==271253 || run==271254 || run==271269 || run==271280 || run==271291) {
+    delay=49; return delay;
   }
   if (run==271304) {
     if (ls<72) { delay=49; return delay; }
@@ -63,7 +82,7 @@ int delay(uint run, const uint ls) {
     else        { delay=49; return delay; }
   }
   if (run==271307) {
-    delay=49;
+    delay=52; // according to the elog this is 49
     return delay;
   }
   if (run==271310) {
