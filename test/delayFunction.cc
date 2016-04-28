@@ -54,14 +54,8 @@ int delay(uint run, const uint ls) {
     else 	{ delay=56; return delay; }
   }
   if (run==271304) {
-    if (ls<72) {
-      delay=56; // this was not recorded!! should be the original setting or the one before this run
-      return delay;
-    }
-    else {
-      delay=54;
-      return delay;
-    }
+    if (ls<72) { delay=49; return delay; }
+    else       { delay=54; return delay; }
   }
   if (run==271306) {
     if (ls<98)  { delay=54; return delay; }
@@ -73,14 +67,8 @@ int delay(uint run, const uint ls) {
     return delay;
   }
   if (run==271310) {
-    if (ls<12) {
-      delay=49; // this was not recorded!! should be the original setting or the one before this run
-      return delay;
-    }
-    else {
-      delay=49;
-      return delay;
-    }
+    if (ls<12) { delay=52; return delay; }
+    else       { delay=49; return delay; }
   }
   return delay;
 }
