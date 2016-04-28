@@ -45,7 +45,7 @@ int delay(uint run, const uint ls) {
     else 	{ delay=64; return delay; }
   }
   if (run==271197) {
-    if (ls<5)	{ delay=64; return delay; } // this is not the same as Aurelijus
+    if (ls<5)	{ delay=64; return delay; } // this is not the same as in the log from Aurelejus
     else 	{ delay=60; return delay; }
   }
   if (run==271214) {
