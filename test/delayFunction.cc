@@ -49,7 +49,7 @@ int delay(uint run, const uint ls) {
     else 	{ delay=60; return delay; }
   }
   if (run==271214) {
-    if (ls<18)  { delay=60; return delay; }
+    if (ls<18)  { delay=60; return delay; } // Aurelejus doesn't have this
     if (ls<51)	{ delay=58; return delay; }
     else 	{ delay=56; return delay; }
   }
