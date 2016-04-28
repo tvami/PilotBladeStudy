@@ -6,7 +6,7 @@ int delay(uint run, const uint ls) {
     if (ls<110) { delay=-25; return delay;} // Get back to this point
     if (ls<223) { delay=49; return delay; }
     if (ls<263) { delay=37; return delay; }
-    if (ls<306) { delay=25; return delay; } // Return here 
+    if (ls<306) { delay=25; return delay; }
   } 
   if (run==271084) { 
     delay=12; return delay; 
