@@ -110,5 +110,8 @@ int delay(uint run, const uint ls) {
     if (ls<122) { delay=114; return delay;}
     else        { delay=62; return delay; }
   }
+  if (run==272022) {
+   delay=62; return delay;
+  }
   return delay;
 }
