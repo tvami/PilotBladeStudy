@@ -95,5 +95,10 @@ int delay(uint run, const uint ls) {
   if (run==272012 || run==272013 || run==272014) {
     delay=92; return delay;
   }
+  if (run==0) {
+    if (ls<0)  { delay=94; return delay; }
+    if (ls<0)  { delay=96; return delay; }
+    else       { delay=0; return delay; }
+  }
   return delay;
 }
