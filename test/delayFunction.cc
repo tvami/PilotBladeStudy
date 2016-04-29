@@ -89,5 +89,11 @@ int delay(uint run, const uint ls) {
     if (ls<12) { delay=52; return delay; }
     else       { delay=49; return delay; }
   }
+  if (run==272008 || run==272009 || run==272010 || run==272011) {
+    delay=90; return delay;
+  }
+  if (run==272012 || run==272013 || run==272014) {
+    delay=92; return delay;
+  }
   return delay;
 }
