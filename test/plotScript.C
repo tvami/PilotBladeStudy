@@ -139,10 +139,17 @@ int delay(uint run, const uint ls) {
   if (run==272022) {
    delay=62; return delay;
   }
+  
+  if (run>271992) {
+    if (run<272000) { // need to check
+      delay=90; return delay;
+    }
+    if (run<272150) {
+      delay=62; return delay;
+    }
+  }
   return delay;
 }
-
-
 
 std::string name(int detid) {
   if (detid==344130820) return std::string("FPix_BmI_D3_BLD3_PNL1_PLQ1");
@@ -373,37 +380,6 @@ void digis()
     l->Draw();
     if (save) c->SaveAs(Form("%sAll_%s%s", save_dir.c_str(), hists[0][j]->GetName(), format));
   }
-
-
-//   TCanvas *c1, *c2, *c3, *c4, *c5, *c6, *c7, *c8, *c9, *c10;
-
-//   new TCanvas("c0002"); 
-//   for (size_t i=0; i<detids.size(); i++) PBADCDist[i]->Draw(i==0? "" :"SAME");
-
-//   c1 = custom_can_(PBDigisMod[0], "PBDigisMapModAll", 0,0,     840,340, 80,100,     60,60,   13,0.1, 0.95);
-//   for (size_t i=0; i<detids.size(); i++) PBDigisMod[i]->Draw(i==0? "" :"SAME");
-//   //prelim_lat_(350,400,170,180, 2);
-//   gPad->Update(); 
-//   if (save) c1->SaveAs((save_dir+std::string(c1->GetName())+format).c_str());
-  
-//   c2 = custom_can_(PBDigiVsLS[0], "PBDigiVsLS", 0,0,     450,450, 80,80,     60,60,   13,0.1, 0.95);
-//   for (size_t i=0; i<detids.size(); i++) PBDigiVsLS[i]->Draw(i==0? "" :"SAME");
-//   //prelim_lat_(230,280,150,160, 2);
-//   gPad->Update(); 
-//   if (save) c2->SaveAs((save_dir+std::string(c2->GetName())+format).c_str());
-  
-//   new TCanvas("c3"); for (size_t i=0; i<detids.size(); i++) PBClusterCharge[i]->Draw(i==0? "" :"SAME");
-//   new TCanvas("c4"); for (size_t i=0; i<detids.size(); i++) PBClusterSize[i]->Draw(i==0? "" :"SAME");
-//   new TCanvas("c5"); for (size_t i=0; i<detids.size(); i++) PBClustersMod[i]->Draw(i==0? "" :"SAME");
-//   new TCanvas("c6"); for (size_t i=0; i<detids.size(); i++) PBClusterChargeVsLS[i]->Draw(i==0? "" :"SAME");
-//   new TCanvas("c7"); for (size_t i=0; i<detids.size(); i++) PBClusterSizeVsLS[i]->Draw(i==0? "" :"SAME");
-
-//   c8 = custom_can_(PBClustersVsLS[0], "PBClustersVsLS", 0,0,     450,450, 80,80,     60,60,   13,0.1, 0.95);
-//   for (size_t i=0; i<detids.size(); i++) PBClustersVsLS[i]->Draw(i==0? "" :"SAME");
-//   prelim_lat_(230,280,150,160, 2);
-//   gPad->Update(); 
-//   if (save) c8->SaveAs((save_dir+std::string(c8->GetName())+format).c_str());
-
 }
 
 void plotScript() {
