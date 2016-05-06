@@ -184,8 +184,12 @@ void digis()
   
 
   TChain* filechain = new TChain("filechain");
-  filechain->Add("/data/vami/projects/pilotBlade/pp2016Processing/CMSSW_8_0_5/src/0DataProc/crab/BP/Ntuple/crab_PilotBlade_data_Ntuplizer_pp_BP_good_RunsApril23_v1/results/nTuplePilotBlade_All_1.root");
-
+  filechain->Add("/data/vami/projects/pilotBlade/pp2016Processing/Ntuple/April23/*.root");
+  filechain->Add("/data/vami/projects/pilotBlade/pp2016Processing/Ntuple/April24/*.root");
+  filechain->Add("/data/vami/projects/pilotBlade/pp2016Processing/Ntuple/April25/*.root");
+  filechain->Add("/data/vami/projects/pilotBlade/pp2016Processing/Ntuple/April29/*.root");
+  
+ 
   // Create the histograms
   std::vector<std::vector<TH1*> > hists;
 
