@@ -369,7 +369,7 @@ void digis()
     h->Draw();
     TLegend *l = new TLegend(0.55, 0.15, 0.89, 0.30, "Modules");
     l->SetLineColor(0);
-    for (size_t i=1; i<hists.size(); i++) {
+    for (size_t i=0; i<hists.size(); i++) {
       if (hists[i][j]->GetEntries()==0) continue;
       hists[i][j]->Draw("SAME");
       l->AddEntry(hists[i][j], name(detids[i]).c_str());
