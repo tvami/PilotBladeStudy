@@ -108,15 +108,15 @@ int delay(uint run, const uint ls) {
     if (ls<98)  { delay=54; return delay; }
     else 	{ delay=52; return delay; }
   }
-  //if (run==271307) {
-  //  delay=52; // according to the elog this is 49
-  //  return delay;
-  //}
+  if (run==271307) {
+  	//did not manage to be reconfigured, just 52ns.
+    		  delay=52; return delay;
+  }
   //if (run==271310) {
   //  if (ls<12) { delay=52; return delay; }
   //  else       { delay=49; return delay; }
   //}
-  if (run==272008 || run==272009 || run==272010 || run==272011) {
+  if (run==272008 || run==272010 || run==272011) {
     delay=90; return delay;
   }
   if (run==272012 || run==272013 || run==272014) {
