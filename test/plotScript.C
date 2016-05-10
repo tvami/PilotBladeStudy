@@ -159,6 +159,11 @@ std::string name(int detid) {
   if (detid==344132100) return std::string("FPix_BmI_D3_BLD2_PNL2_PLQ1");
   if (detid==344133124) return std::string("FPix_BmO_D3_BLD10_PNL2_PLQ1");
   if (detid==344134148) return std::string("FPix_BmO_D3_BLD11_PNL2_PLQ1");
+  // Disk2
+  if (detid==344081668) return std::string("FPix_BmO_D2_BLD11_PNL1_MOD1");
+  if (detid==344081672) return std::string("FPix_BmO_D2_BLD11_PNL1_MOD2");
+  if (detid==344081676) return std::string("FPix_BmO_D2_BLD11_PNL1_MOD3");
+  if (detid==344081680) return std::string("FPix_BmO_D2_BLD11_PNL1_MOD4");
   return std::string("");
 }
 
@@ -187,6 +192,7 @@ void digis()
   filechain->Add("/data/vami/projects/pilotBlade/pp2016Processing/Ntuple/April23/*.root");
   filechain->Add("/data/vami/projects/pilotBlade/pp2016Processing/Ntuple/April24/*.root");
   filechain->Add("/data/vami/projects/pilotBlade/pp2016Processing/Ntuple/April25/*.root");
+  // 38T from here
   filechain->Add("/data/vami/projects/pilotBlade/pp2016Processing/Ntuple/April29/*.root");
   
  
@@ -314,6 +320,8 @@ void digis()
       int imod = idx[module_on.rawid];
 
       if(module_on.disk==-3) {
+      // if we want the disk2 modules before the PB then include:
+      // if((module_on.disk==-3) || (module_on.disk==-2 && module_on.blade==-11) ) {
 	PBClusterCharge[imod]->Fill(clusters.charge);
 	PBClusterSize[imod]->Fill(clusters.size);
         PBClustersMod[imod]->Fill(clusters.y,clusters.x);   
