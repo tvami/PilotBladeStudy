@@ -15,10 +15,17 @@ PilotBladeStudy::PilotBladeStudy(edm::ParameterSet const& iConfig) : iConfig_(iC
   outfile_  = NULL;
   
   usePixelCPE_=false;
+  cosmicsCase_=false;
   
   BSToken_                  = consumes< reco::BeamSpot >(edm::InputTag("offlineBeamSpot"));
   condInRunBlockToken_      = mayConsume< edm::ConditionsInRunBlock, InRun >(edm::InputTag("conditionsInEdm"));
   condInLumiBlockToken_     = mayConsume< edm::ConditionsInLumiBlock, InLumi >(edm::InputTag("conditionsInEdm"));
+  
+  if (iConfig_.exists("triggerTag")) {
+    triggerTag_=iConfig_.getParameter<edm::InputTag>("triggerTag");
+    std::cout<<"NON-DEFAULT PARAMETER: triggerTag= "<<triggerTag_<<std::endl;
+  } else triggerTag_=edm::InputTag("TriggerResults","", "HLT");
+  triggerResultsToken_=consumes<edm::TriggerResults>(triggerTag_);
   
   siPixelDigisToken_        = consumes< edm::DetSetVector<PixelDigi> >(edm::InputTag("siPixelDigis"));
   PBDigisToken_             = consumes< edm::DetSetVector<PixelDigi> >(edm::InputTag("PBDigis"));
@@ -45,6 +52,25 @@ void PilotBladeStudy::beginJob() {
   if (iConfig_.exists("usePixelCPE")) {
     usePixelCPE_=iConfig_.getParameter<bool>("usePixelCPE");
     std::cout<<"Pixel Cluster Parameter Estimator (CPE) is used "<<std::endl;
+  }
+  
+  if (iConfig_.exists("cosmicsCase")) {
+    cosmicsCase_=iConfig_.getParameter<bool>("cosmicsCase");
+    std::cout<<"This is a Cosmics run "<<std::endl;
+  }
+  
+  if (iConfig_.exists("triggerTag")) {
+    triggerTag_=iConfig_.getParameter<edm::InputTag>("triggerTag");
+    std::cout<<"NON-DEFAULT PARAMETER: triggerTag= "<<triggerTag_<<std::endl;
+  } else {
+    triggerTag_=edm::InputTag("TriggerResults","", "HLT");
+  }
+  
+  if (iConfig_.exists("triggerNames")) {
+    triggerNames_=iConfig_.getParameter<std::vector<std::string> >("triggerNames");
+    std::cout<<"NON-DEFAULT PARAMETER: triggerNames= ";
+    for (size_t i=0; i<triggerNames_.size(); i++) std::cout<<triggerNames_[i]<<" ";
+    std::cout<<std::endl;
   }
   
   outfile_ = new TFile(fileName.c_str(), "RECREATE");
@@ -134,7 +160,6 @@ void PilotBladeStudy::endRun(edm::Run const& iRun, edm::EventSetup const& iSetup
 // -------------------------------- analyze -----------------------------------
 void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
   bool DEBUG = false;
-  bool cosmicsCase = true;
   if (DEBUG) std::cout << "Processing the event " << std::endl;
   
   init_all();
@@ -147,6 +172,20 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   evt_.bx   = iEvent.bunchCrossing();
   evt_.evt  = iEvent.id().event();
   
+  edm::Handle<edm::TriggerResults> triggerResults;
+  iEvent.getByToken(triggerResultsToken_, triggerResults);
+  if (triggerResults.isValid()) {
+    evt_.trig=0;
+    const edm::TriggerNames& triggerNames = iEvent.triggerNames(*triggerResults);
+    for (size_t itrig=0; itrig<triggerNames.size(); itrig++) {
+      std::string sname=triggerNames.triggerNames()[itrig];
+      for (size_t k=0; k<triggerNames_.size(); k++) {
+	if (sname.find(triggerNames_[k])) continue;
+	if (triggerResults->accept(itrig)==0) continue;
+	evt_.trig|=(1<<k);
+      }
+    }
+  }
   // ----------------------- Read Extra Infos -----------------------
   readExtraInfos();
   evt_.wbc=wbc[iEvent.id().run()];
@@ -157,18 +196,18 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   readFEDErrors(iEvent, iSetup, SiPixelRawDataErrorToken_, trackingErrorToken_, federrors);
   
   // ----------------------- Analyze digis -----------------------
-  analyzeDigis(iEvent, iSetup, siPixelDigisToken_, federrors, 0, cosmicsCase);
-  analyzeDigis(iEvent, iSetup, PBDigisToken_, federrors, 1, cosmicsCase);
+  analyzeDigis(iEvent, iSetup, siPixelDigisToken_, federrors, 0, cosmicsCase_);
+  analyzeDigis(iEvent, iSetup, PBDigisToken_, federrors, 1, cosmicsCase_);
   
   // ----------------------- Analyze clusters ----------------------
-  analyzeClusters(iEvent, iSetup, siPixelClustersToken_, federrors, 0, cosmicsCase); 
-  analyzeClusters(iEvent, iSetup, PBClustersToken_, federrors, 1, cosmicsCase);
+  analyzeClusters(iEvent, iSetup, siPixelClustersToken_, federrors, 0, cosmicsCase_); 
+  analyzeClusters(iEvent, iSetup, PBClustersToken_, federrors, 1, cosmicsCase_);
   
   // ------------------------ Analyze tracks -----------------------
-  analyzeTracks(iEvent, iSetup, trajTrackCollToken_, federrors, 0, cosmicsCase); 
+  analyzeTracks(iEvent, iSetup, trajTrackCollToken_, federrors, 0, cosmicsCase_); 
   
   // --------------------- Analyze trajectories --------------------
-  analyzeTrajs(iEvent, iSetup, trajTrackCollToken_, federrors, 1, cosmicsCase); 
+  analyzeTrajs(iEvent, iSetup, trajTrackCollToken_, federrors, 1, cosmicsCase_); 
   std::cout << "Number of PB Hits: " << nPBHit << " out of " 
 	    << nPixelHit << " Pixel hit and " << nStripHit
 	    << " Strip hit in the events so far. " << std::endl;
@@ -476,15 +515,16 @@ void PilotBladeStudy::analyzeDigis(const edm::Event& iEvent,
       if (verbosity) std::cout << "Looping on the digi sets " << std::endl;
       if (cosmicsCase==true && verbosity)  std::cout << "This is a Cosmics case -- we save everything" << std::endl;
       if (subDetId!=PixelSubdetector::PixelEndcap && subDetId!=PixelSubdetector::PixelBarrel && cosmicsCase==false) {
-        std::cout << "Not a pixel digi -- skipping the event" << std::endl;
+        if (verbosity>1) std::cout << "Not a pixel digi -- skipping the event" << std::endl;
         continue;
       }
       // Take only the FPIX pixel digis
       if (subDetId!=PixelSubdetector::PixelEndcap && cosmicsCase==false) {
-        std::cout << "Not a FPIX digi -- skipping the event" << std::endl;
+	if (verbosity>1) std::cout << "Not a FPIX digi -- skipping the event" << std::endl;
         continue;
       }
       
+      if (module_on.disk==-3 && (verbosity)) std::cout << "Pilot Blade digi: " << std::endl;
       edm::DetSet<PixelDigi>::const_iterator itDigi=itDigiSet->begin();
       for(; itDigi!=itDigiSet->end(); ++itDigi) {
         Digi digi;
@@ -516,6 +556,7 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
                                      ) {
   bool DEBUGClusters = false;
   if (verbosity) DEBUGClusters = true;
+  std::map<unsigned int, int> nclu_mod;
   
   // Get the handle for clusters
   edm::Handle<edmNew::DetSetVector<SiPixelCluster> > clusterCollectionHandle;
@@ -585,7 +626,10 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
         
         clust.mod    = getModuleData(detId.rawId(), federrors);
         clust.mod_on = getModuleData(detId.rawId(), federrors, "online");
-        
+	
+	if (!nclu_mod.count(detId.rawId())) nclu_mod[detId.rawId()] = 0;
+	nclu_mod[detId.rawId()]++;
+	clust.nclu_mod = nclu_mod[detId.rawId()];
         clust_.push_back(clust);
       }
     } // loop on cluster sets
@@ -692,7 +736,7 @@ void PilotBladeStudy::analyzeTrajs(const edm::Event& iEvent,
 	if(recHit->geographicalId().det() != DetId::Tracker) continue;
 		
 	if( (subDetId == 3 || subDetId == 4 || subDetId == 5 ||subDetId == 6) && cosmicsCase == false) {
-          std::cout << " Hit found on the Strip detector " << std::endl;
+          if (verbosity>2) std::cout << " Hit found on the Strip detector " << std::endl;
           continue;
         }
                 
@@ -771,7 +815,7 @@ void PilotBladeStudy::analyzeTrajs(const edm::Event& iEvent,
 void PilotBladeStudy::findClosestClusters(
 	      const edm::Event& iEvent, 
 	      const edm::EventSetup& iSetup, uint32_t rawId, 
-	      float lx, float ly, float dx_cl, float dy_cl, 
+	      float lx, float ly, float& dx_cl, float& dy_cl, 
 	      edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> > clusterColl,
 	      ClustData& clu) {
   
@@ -794,7 +838,6 @@ void PilotBladeStudy::findClosestClusters(
   }
   const TrackerGeometry *tkgeom = &(*tracker);
   
-
   // Get the handle for clusters
   edm::Handle<edmNew::DetSetVector<SiPixelCluster> > clusterCollectionHandle;
   iEvent.getByToken(clusterColl, clusterCollectionHandle);
