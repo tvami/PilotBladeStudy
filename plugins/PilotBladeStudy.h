@@ -141,6 +141,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
   
   edm::EDGetTokenT<reco::BeamSpot>                  		BSToken_;
   edm::EDGetTokenT<LumiSummary> lumiSummaryToken_;
+  edm::EDGetTokenT<edm::TriggerResults> triggerResultsToken_;
 
   edm::EDGetTokenT< edm::DetSetVector<PixelDigi> >	siPixelDigisToken_;
   edm::EDGetTokenT< edm::DetSetVector<PixelDigi> >	PBDigisToken_;
@@ -161,10 +162,14 @@ class PilotBladeStudy : public edm::EDAnalyzer
   TTree* trajTree_;
   TFile* outfile_;
   
+  std::vector<std::string> triggerNames_; // Max 20 trigger names
+  edm::InputTag triggerTag_;
+  
   std::map<size_t,int> wbc;
   std::map<size_t,int> delay;
-
+  
   bool usePixelCPE_;
+  bool cosmicsCase_;
   bool isNewLS_;
   
   int nPixelHit = 0;
@@ -182,6 +187,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
       int orb;
       int bx;
       int evt;
+      int trig;
       
       int wbc;
       int delay;
@@ -199,6 +205,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
         orb=NOVAL_I;
         bx=NOVAL_I;
         evt=NOVAL_I;
+	trig=NOVAL_I;
 	
 	wbc=NOVAL_I;
 	delay=NOVAL_I;
@@ -206,7 +213,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
         federrs_size=0;
         for (size_t i=0; i<16; i++) federrs[i][0]=federrs[i][1]=NOVAL_I;
 
-	list="fill/I:run/I:ls/I:orb/I:bx/I:evt/I:wbc/I:delay/I:federrs_size/I:federrs[federrs_size][2]";
+	list="fill/I:run/I:ls/I:orb/I:bx/I:evt/I:trig/I:wbc/I:delay/I:federrs_size/I:federrs[federrs_size][2]";
     }
   } evt_;
 // ---------------------------- end of Event info ------------------------
@@ -293,6 +300,8 @@ class PilotBladeStudy : public edm::EDAnalyzer
     int size;
     float charge;
     
+    int nclu_mod;
+    
     std::string list;
 
     ClustData() { init(); }
@@ -305,8 +314,10 @@ class PilotBladeStudy : public edm::EDAnalyzer
       
       size=0;
       charge=NOVAL_F;
+      
+      nclu_mod=NOVAL_I;
 
-      list="x/F:y/F:glx/F:gly/F:glz/F:size/I:charge/F";
+      list="x/F:y/F:glx/F:gly/F:glz/F:size/I:charge/F:nclu_mod/I";
     }
     
   };
@@ -558,7 +569,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
 		       int, bool);
   				
   void findClosestClusters(const edm::Event&, const edm::EventSetup&, uint32_t, 
-			   float, float, float, float, 
+			   float, float, float&, float&, 
 			   edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> >, ClustData&);
   
   void readExtraInfos();
