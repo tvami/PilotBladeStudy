@@ -118,6 +118,7 @@ int delay(uint run, const uint ls) {
   //  if (ls<12) { delay=52; return delay; }
   //  else       { delay=49; return delay; }
   //}
+  //2016-04-29
   if (run==272008 || run==272010 || run==272011) {
     delay=90; return delay;
   }
