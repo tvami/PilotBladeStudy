@@ -29,7 +29,7 @@ bool FileExists(char* filename)
 
 int delay(uint run, const uint ls) {
   int delay=-9999;
-
+  //2016-04-23
   if (run==271056) {
     if (ls<58)  { delay=37; return delay; }
     if (ls<81)  { delay=12; return delay; }
@@ -41,6 +41,7 @@ int delay(uint run, const uint ls) {
   if (run==271084 || run==271087) { 
     delay=49; return delay; 
   } 
+  //2016-04-24
   if (run==271136 || run==271142 || run==271143 || run==271144 || run==271151) {
     delay=49; return delay;
   }
@@ -100,6 +101,7 @@ int delay(uint run, const uint ls) {
   if (run==271253 || run==271254 || run==271269 || run==271280 || run==271291) {
     delay=49; return delay;
   }
+  //2016-04-25
   if (run==271304) {
     if (ls<72) { delay=49; return delay; }
     else       { delay=54; return delay; }
@@ -138,7 +140,7 @@ int delay(uint run, const uint ls) {
   if (run==272022) {
    delay=62; return delay;
   }
-  // CRAFAT from here
+  // CRAFT from here
   //if (run>272022) {
   // if (run<272000) { // need to check
   //    delay=90; return delay;
