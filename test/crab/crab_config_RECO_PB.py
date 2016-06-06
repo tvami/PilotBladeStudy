@@ -14,7 +14,7 @@ config.JobType.psetName = '2ppRaw2Reco_CMSSW80X.py'
 
 config.section_('Data')
 config.Data.inputDataset = '/ExpressPhysics/Run2016B-Express-v2/FEVT'
-config.Data.runRange = '274387'
+config.Data.runRange = '274000-274443'
 config.Data.splitting = 'LumiBased'
 config.Data.unitsPerJob = 1 
 config.Data.outLFNDirBase = '/store/user/tvami/PilotBlade_data_RECO_pp_Run274387_v1/'
