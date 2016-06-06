@@ -9,8 +9,9 @@ config.General.transferLogs = True
 config.section_('JobType')
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = '2ppRaw2Reco_CMSSW80X.py'
-#config.JobType.maxMemoryMB = 3000
+config.JobType.inputFiles = ['tracker_alignment_80X_dataRun2_Prompt_v8.db']
 
+#config.JobType.maxMemoryMB = 3000
 
 config.section_('Data')
 config.Data.inputDataset = '/ExpressPhysics/Run2016B-Express-v2/FEVT'
