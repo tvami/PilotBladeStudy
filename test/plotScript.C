@@ -141,6 +141,7 @@ int delay(uint run, const uint ls) {
   if (run==272022) {
    delay=62; return delay;
   }
+  
   // CRAFT from here
   //if (run>272022) {
   // if (run<272000) { // need to check
@@ -150,6 +151,478 @@ int delay(uint run, const uint ls) {
   //    delay=62; return delay;
   // }
   //}
+  // Timing Scan2
+  if (run==274000) { 
+    delay=62; return delay; }
+  if (run==274002) { 
+    delay=62; return delay; }
+  if (run==274004) { 
+    delay=62; return delay; }
+  if (run==274007) { 
+    delay=62; return delay; }
+  if (run==274008) { 
+    delay=62; return delay; }
+  if (run==274036) { 
+    delay=62; return delay; }
+  if (run==274044) { 
+    delay=62; return delay; }
+  if (run==274046) { 
+    delay=62; return delay; }
+  if (run==274047) { 
+    delay=62; return delay; }
+  if (run==274048) { 
+    delay=62; return delay; }
+  if (run==274049) { 
+    delay=62; return delay; }
+  if (run==274050) { 
+    delay=62; return delay; }
+  if (run==274052) { 
+    delay=62; return delay; }
+  if (run==274057) { 
+    delay=62; return delay; }
+  if (run==274062) { 
+    delay=62; return delay; }
+  if (run==274064) { 
+    delay=62; return delay; }
+  if (run==274076) { 
+    delay=62; return delay; }
+  if (run==274077) { 
+    delay=62; return delay; }
+  if (run==274079) { 
+    delay=52; return delay; }
+  if (run==274080) { 
+    delay=52; return delay; }
+  if (run==274081) { 
+    delay=52; return delay; }
+  if (run==274083) { 
+    delay=52; return delay; }
+  if (run==274086) { 
+    delay=52; return delay; }
+  if (run==274087) { 
+    delay=52; return delay; }
+  if (run==274088) { 
+    delay=52; return delay; }
+  if (run==274089) { 
+    delay=52; return delay; }
+  if (run==274090) { 
+    delay=52; return delay; }
+  if (run==274091) { 
+    delay=52; return delay; }
+  if (run==274093) { 
+    delay=52; return delay; }
+  if (run==274094) { 
+    delay=52; return delay; }
+  if (run==274096) { 
+    delay=52; return delay; }
+  if (run==274102) { 
+    delay=45; return delay; }
+  if (run==274103) { 
+    delay=45; return delay; }
+  if (run==274104) { 
+    delay=45; return delay; }
+  if (run==274105) { 
+    delay=45; return delay; }
+  if (run==274106) { 
+    delay=45; return delay; }
+  if (run==274107) { 
+    delay=45; return delay; }
+  if (run==274108) { 
+    delay=70; return delay; }
+  if (run==274113) { 
+    delay=70; return delay; }
+  if (run==274114) { 
+    delay=70; return delay; }
+  if (run==274115) { 
+    delay=70; return delay; }
+  if (run==274122) { 
+    delay=70; return delay; }
+  if (run==274123) { 
+    delay=70; return delay; }
+  if (run==274132) { 
+    delay=70; return delay; }
+  if (run==274133) { 
+    delay=70; return delay; }
+  if (run==274134) { 
+    delay=70; return delay; }
+  if (run==274135) { 
+    delay=70; return delay; }
+  if (run==274138) { 
+    delay=70; return delay; }
+  if (run==274139) { 
+    delay=70; return delay; }
+  if (run==274141) { 
+    delay=70; return delay; }
+  if (run==274142) { 
+    delay=70; return delay; }
+  if (run==274146) { 
+    delay=70; return delay; }
+  if (run==274147) { 
+    delay=70; return delay; }
+  if (run==274148) { 
+    delay=70; return delay; }
+  if (run==274149) { 
+    delay=70; return delay; }
+  if (run==274150) { 
+    delay=70; return delay; }
+  if (run==274151) { 
+    delay=70; return delay; }
+  if (run==274152) { 
+    delay=70; return delay; }
+  if (run==274154) { 
+    delay=70; return delay; }
+  if (run==274155) { 
+    delay=70; return delay; }
+  if (run==274156) { 
+    delay=70; return delay; }
+  if (run==274157) { 
+    delay=70; return delay; }
+  if (run==274159) { 
+    delay=82; return delay; }
+  if (run==274192) { 
+    delay=82; return delay; }
+  if (run==274195) { 
+    delay=82; return delay; }
+  if (run==274196) { 
+    delay=82; return delay; }
+  if (run==274246) { 
+    delay=82; return delay; }
+  if (run==274247) { 
+    delay=82; return delay; }
+  if (run==274248) { 
+    delay=82; return delay; }
+  if (run==274256) { 
+    delay=82; return delay; }
+  if (run==274263) { 
+    delay=82; return delay; }
+  if (run==274264) { 
+    delay=82; return delay; }
+  if (run==274266) { 
+    delay=82; return delay; }
+  if (run==274268) { 
+    delay=82; return delay; }
+  if (run==274  if (run==270) { 
+    delay=82; return delay; }
+  if (run==274  if (run==274) { 
+    delay=82; return delay; }
+  if (run==274  if (run==275) { 
+    delay=82; return delay; }
+  if (run==274  if (run==276) { 
+    delay=82; return delay; }
+  if (run==274280) { 
+    delay=82; return delay; }
+  if (run==274281) { 
+    delay=82; return delay; }
+  if (run==274289) { 
+    delay=82; return delay; }
+  if (run==274290) { 
+    delay=82; return delay; }
+  if (run==274294) { 
+    delay=82; return delay; }
+  if (run==274295) { 
+    delay=82; return delay; }
+  if (run==274300) { 
+    delay=82; return delay; }
+  if (run==274305) { 
+    delay=82; return delay; }
+  if (run==274306) { 
+    delay=82; return delay; }
+  if (run==274309) { 
+    delay=82; return delay; }
+  if (run==274311) { 
+    delay=82; return delay; }
+  if (run==274313) { 
+    delay=82; return delay; }
+  if (run==274317) { 
+    delay=82; return delay; }
+  if (run==274320) { 
+    delay=82; return delay; }
+  if (run==274324) { 
+    delay=82; return delay; }
+  if (run==274337) { 
+    delay=82; return delay; }
+  if (run==274344) { 
+    delay=82; return delay; }
+  if (run==274345) { 
+    delay=82; return delay; }
+  if (run==274346) { 
+    delay=82; return delay; }
+  if (run==274347) { 
+    delay=82; return delay; }
+  if (run==274349) { 
+    delay=82; return delay; }
+  if (run==274356) { 
+    delay=82; return delay; }
+  if (run==274363) { 
+    delay=82; return delay; }
+  if (run==274366) { 
+    delay=82; return delay; }
+  if (run==274367) { 
+    delay=82; return delay; }
+  if (run==274368) { 
+    delay=82; return delay; }
+  if (run==274369) { 
+    delay=82; return delay; }
+  if (run==274372) { 
+    delay=82; return delay; }
+  if (run==274373) { 
+    delay=82; return delay; }
+  if (run==274374) { 
+    delay=82; return delay; }
+  if (run==274377) { 
+    delay=82; return delay; }
+  if (run==274378) { 
+    delay=82; return delay; }
+  if (run==274379) { 
+    delay=82; return delay; }
+  if (run==274380) { 
+    delay=82; return delay; }
+  if (run==274381) { 
+    delay=82; return delay; }
+  if (run==274382) { 
+    delay=82; return delay; }
+  if (run==274384) { 
+    delay=82; return delay; }
+  if (run==274385) { 
+    delay=82; return delay; }
+  if (run==274386) { 
+    delay=45; return delay; }
+  if (run==274387) { 
+    delay=45; return delay; }
+  if (run==274391) { 
+    delay=50; return delay; }
+  if (run==274392) { 
+    delay=50; return delay; }
+  if (run==274393) { 
+    delay=50; return delay; }
+  if (run==274394) { 
+    delay=50; return delay; }
+  if (run==274396) { 
+    delay=50; return delay; }
+  if (run==274398) { 
+    delay=50; return delay; }
+  if (run==274401) { 
+    delay=50; return delay; }
+  if (run==274402) { 
+    delay=50; return delay; }
+  if (run==274414) { 
+    delay=50; return delay; }
+  if (run==274415) { 
+    delay=50; return delay; }
+  if (run==274417) { 
+    delay=50; return delay; }
+  if (run==274418) { 
+    delay=50; return delay; }
+  if (run==274419) { 
+    delay=50; return delay; }
+  if (run==274420) { 
+    delay=50; return delay; }
+  if (run==274421) { 
+    delay=50; return delay; }
+  if (run==274422) { 
+    delay=56; return delay; }
+  if (run==274424) { 
+    delay=60; return delay; }
+  if (run==274425) { 
+    delay=60; return delay; }
+  if (run==274430) { 
+    delay=60; return delay; }
+  if (run==274433) { 
+    delay=60; return delay; }
+  if (run==274436) { 
+    delay=60; return delay; }
+  if (run==274437) { 
+    delay=60; return delay; }
+  if (run==274438) { 
+    delay=60; return delay; }
+  if (run==274439) { 
+    delay=60; return delay; }
+  if (run==274440) { 
+    delay=60; return delay; }
+  if (run==274441) { 
+    delay=65; return delay; }
+  if (run==274442) { 
+    delay=65; return delay; }
+  if (run==274443) { 
+    delay=70; return delay; }
+  if (run==274444) { 
+    delay=70; return delay; }
+  if (run==274445) { 
+    delay=40; return delay; }
+  if (run==274446) { 
+    delay=40; return delay; }
+  if (run==274448) { 
+    delay=40; return delay; }
+  if (run==274449) { 
+    delay=40; return delay; }
+  if (run==274450) { 
+    delay=40; return delay; }
+  if (run==274452) { 
+    delay=40; return delay; }
+  if (run==274455) { 
+    delay=40; return delay; }
+  if (run==274463) { 
+    delay=40; return delay; }
+  if (run==274468) { 
+    delay=40; return delay; }
+  if (run==274469) { 
+    delay=40; return delay; }
+  if (run==274470) { 
+    delay=40; return delay; }
+  if (run==274471) { 
+    delay=40; return delay; }
+  if (run==274495) { 
+    delay=40; return delay; }
+  if (run==274503) { 
+    delay=40; return delay; }
+  if (run==274505) { 
+    delay=40; return delay; }
+  if (run==274506) { 
+    delay=40; return delay; }
+  if (run==274507) { 
+    delay=40; return delay; }
+  if (run==274508) { 
+    delay=40; return delay; }
+  if (run==274510) { 
+    delay=40; return delay; }
+  if (run==274512) { 
+    delay=40; return delay; }
+  if (run==274516) { 
+    delay=40; return delay; }
+  if (run==274517) { 
+    delay=40; return delay; }
+  if (run==274569) { 
+    delay=40; return delay; }
+  if (run==274718) { 
+    delay=40; return delay; }
+  if (run==274720) { 
+    delay=40; return delay; }
+  if (run==274722) { 
+    delay=40; return delay; }
+  if (run==274724) { 
+    delay=40; return delay; }
+  if (run==274726) { 
+    delay=40; return delay; }
+  if (run==274728) { 
+    delay=40; return delay; }
+  if (run==274733) { 
+    delay=40; return delay; }
+  if (run==274743) { 
+    delay=40; return delay; }
+  if (run==274744) { 
+    delay=40; return delay; }
+  if (run==274746) { 
+    delay=40; return delay; }
+  if (run==274748) { 
+    delay=40; return delay; }
+  if (run==274749) { 
+    delay=40; return delay; }
+  if (run==274758) { 
+    delay=40; return delay; }
+  if (run==274771) { 
+    delay=40; return delay; }
+  if (run==274774) { 
+    delay=40; return delay; }
+  if (run==274775) { 
+    delay=40; return delay; }
+  if (run==274776) { 
+    delay=40; return delay; }
+  if (run==274777) { 
+    delay=40; return delay; }
+  if (run==274778) { 
+    delay=40; return delay; }
+  if (run==274779) { 
+    delay=40; return delay; }
+  if (run==274780) { 
+    delay=40; return delay; }
+  if (run==274781) { 
+    delay=40; return delay; }
+  if (run==274783) { 
+    delay=40; return delay; }
+  if (run==274784) { 
+    delay=40; return delay; }
+  if (run==274785) { 
+    delay=40; return delay; }
+  if (run==274799) { 
+    delay=40; return delay; }
+  if (run==274802) { 
+    delay=40; return delay; }
+  if (run==274804) { 
+    delay=40; return delay; }
+  if (run==274806) { 
+    delay=40; return delay; }
+  if (run==274810) { 
+    delay=40; return delay; }
+  if (run==274813) { 
+    delay=40; return delay; }
+  if (run==274814) { 
+    delay=40; return delay; }
+  if (run==274815) { 
+    delay=40; return delay; }
+  if (run==274817) { 
+    delay=40; return delay; }
+  if (run==274850) { 
+    delay=40; return delay; }
+  if (run==274856) { 
+    delay=40; return delay; }
+  if (run==274861) { 
+    delay=40; return delay; }
+  if (run==274864) { 
+    delay=40; return delay; }
+  if (run==274866) { 
+    delay=40; return delay; }
+  if (run==274868) { 
+    delay=40; return delay; }
+  if (run==274869) { 
+    delay=40; return delay; }
+  if (run==274873) { 
+    delay=40; return delay; }
+  if (run==274875) { 
+    delay=40; return delay; }
+  if (run==274877) { 
+    delay=40; return delay; }
+  if (run==274878) { 
+    delay=40; return delay; }
+  if (run==274879) { 
+    delay=40; return delay; }
+  if (run==274880) { 
+    delay=40; return delay; }
+  if (run==274881) { 
+    delay=40; return delay; }
+  if (run==274883) { 
+    delay=40; return delay; }
+  if (run==274885) { 
+    delay=40; return delay; }
+  if (run==274887) { 
+    delay=40; return delay; }
+  if (run==274888) { 
+    delay=40; return delay; }
+  if (run==274939) { 
+    delay=40; return delay; }
+  if (run==274940) { 
+    delay=40; return delay; }
+  if (run==274941) { 
+    delay=40; return delay; }
+  if (run==274942) { 
+    delay=40; return delay; }
+  if (run==274943) { 
+    delay=40; return delay; }
+  if (run==274944) { 
+    delay=40; return delay; }
+  if (run==274945) { 
+    delay=40; return delay; }
+  if (run==274947) { 
+    delay=40; return delay; }
+  if (run==274948) { 
+    delay=40; return delay; }
+  if (run==274950) { 
+    delay=40; return delay; }
+  if (run==274951) { 
+    delay=40; return delay; }
+  if (run==274953) { 
+    delay=40; return delay; }
+  if (run==274954) { 
+    delay=40; return delay; }
+
   return delay;
 }
 
