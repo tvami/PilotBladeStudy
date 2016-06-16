@@ -300,13 +300,13 @@ int delay(uint run, const uint ls) {
     delay=82; return delay; }
   if (run==274268) { 
     delay=82; return delay; }
-  if (run==274  if (run==270) { 
+  if (run==274270) { 
     delay=82; return delay; }
-  if (run==274  if (run==274) { 
+  if (run==274274) { 
     delay=82; return delay; }
-  if (run==274  if (run==275) { 
+  if (run==274275) { 
     delay=82; return delay; }
-  if (run==274  if (run==276) { 
+  if (run==274276) { 
     delay=82; return delay; }
   if (run==274280) { 
     delay=82; return delay; }
