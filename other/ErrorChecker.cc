@@ -1,3 +1,4 @@
+//EventFilter/SiPixelRawToDigi
 #include "EventFilter/SiPixelRawToDigi/interface/ErrorChecker.h"
 
 #include "CondFormats/SiPixelObjects/interface/SiPixelFrameConverter.h"
