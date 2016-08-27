@@ -153,6 +153,8 @@ class PilotBladeStudy : public edm::EDAnalyzer
   edm::EDGetTokenT<edm::EDCollection<DetId> > trackingErrorToken_;
   edm::EDGetTokenT<edm::EDCollection<DetId> > userErrorToken_;
 
+  std::map<int,int> detIdFromFED40_;
+
   TTree* eventTree_;
   //TTree* lumiTree_;
   TTree* runTree_;
@@ -177,6 +179,29 @@ class PilotBladeStudy : public edm::EDAnalyzer
   int nPBHit    = 0;
     
  public:
+  typedef std::vector< edm::ParameterSet > Parameters;
+
+  struct PositionCorrection {
+    float dx;
+    float dy;
+    PositionCorrection(float x=0.0, float y=0.0) { dx=x; dy=y; }
+  };
+  std::map<unsigned int,PositionCorrection> posCorr_;
+
+  struct FiducialRegion {
+    int rocX;
+    int rocY;
+    float marginX;
+    float marginY;
+    FiducialRegion(int rx, int ry, float x, float y) { rocX=rx; rocY=ry; marginX=x; marginY=y; }
+    std::string print() { 
+      std::stringstream ss;
+      ss << "ROC(" << rocX << ", " << rocY << ") with margins ("<<marginX<<", "<<marginY<<")";
+      return ss.str();
+    };
+  };
+  std::map<unsigned int,std::vector<FiducialRegion> > fidReg_;
+
 
 // ------------------------------- EventData info ------------------------------
   class EventData {
@@ -293,6 +318,8 @@ class PilotBladeStudy : public edm::EDAnalyzer
    public:
     float x;
     float y;
+    float lx;
+    float ly;
     float glx;
     float gly;
     float glz;
@@ -308,6 +335,8 @@ class PilotBladeStudy : public edm::EDAnalyzer
     void init() {
       x=NOVAL_F;
       y=NOVAL_F;
+      lx=NOVAL_F;
+      ly=NOVAL_F;
       glx=NOVAL_F;
       gly=NOVAL_F;
       glz=NOVAL_F;
@@ -317,9 +346,11 @@ class PilotBladeStudy : public edm::EDAnalyzer
       
       nclu_mod=NOVAL_I;
 
-      list="x/F:y/F:glx/F:gly/F:glz/F:size/I:charge/F:nclu_mod/I";
+      list="x/F:y/F:lx/F:ly/F:glx/F:gly/F:glz/F:size/I:charge/F:nclu_mod/I";
     }
-    
+
+    int getROCx() { return (x>=0 && x<160) ? int(x)/80-1+(int(x)/80) : -9999;  }
+    int getROCy() { return (y>=0 && y<416) ? int(y)/52-4+(int(y)/208) : -9999; } 
   };
 // --------------------------- end of ClusterData info ---------------------------- 
   
@@ -379,6 +410,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
       federrortypes.insert(std::pair<int, std::string>(37, "invalid dcol or pixel value "));
       federrortypes.insert(std::pair<int, std::string>(38, "the pixels on a ROC weren't read out from lowest to highest row and dcol value"));
       federrortypes.insert(std::pair<int, std::string>(39, "CRC error"));
+      federrortypes.insert(std::pair<int, std::string>(40, "Overflow error"));
       
       list="det/I:layer/I:ladder/I:half/I:module/I:disk/I:blade/I:panel/I:"
       "federr/I:side/I:shl/I:outer/I:rawid/i";
@@ -482,6 +514,12 @@ class PilotBladeStudy : public edm::EDAnalyzer
       list="type/I:nPixelHit/I:nStripHit/I:nPBHit/I:lx/F:ly/F:lx_err/F:ly_err/F:glx/F:gly/F:glz/F:"
       "onEdge/I:alpha/F:beta/F:dx_cl/F:dy_cl/F:d_cl/F:dx_hit/F:dy_hit/F:d_hit/F";
     }
+
+    int getROCx() { return (int(lx/0.8164)+int(lx/fabs(lx)));  }
+    int getROCy() { return (int(ly/0.81)+int(ly/fabs(ly)));    }
+    bool isWithinROCFiducial(float margX, float margY) { 
+      return (fabs(fabs(fmod(fabs(ly),0.8164)-0.4082)-0.4082)>margX && fabs(fabs(fmod(fabs(ly),0.81)-0.405)-0.405)>margY);
+    }
   };
 // -------------------------- end of TrajectoryData info ------------------------------  
 // ---------------------- end of *Data classes ----------------------
@@ -545,6 +583,9 @@ class PilotBladeStudy : public edm::EDAnalyzer
     trajmeas_.clear();
     clust_.clear();
     digis_.clear();
+    nPixelHit=0;
+    nStripHit=0;
+    nPBHit=0;
   }
 
   
@@ -553,7 +594,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
 
   void readFEDErrors(const edm::Event&, const edm::EventSetup&, 
 		     edm::EDGetTokenT< edm::DetSetVector<SiPixelRawDataError> >, 
-		     edm::EDGetTokenT< edm::EDCollection<DetId> >, std::map<uint32_t, int>);
+		     edm::EDGetTokenT< edm::EDCollection<DetId> >, std::map<uint32_t, int>&);
   
   void analyzeDigis(const edm::Event&, const edm::EventSetup&, 
 		    edm::EDGetTokenT< edm::DetSetVector<PixelDigi> >, std::map<uint32_t, int>, 
