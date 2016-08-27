@@ -35,8 +35,64 @@ PilotBladeStudy::PilotBladeStudy(edm::ParameterSet const& iConfig) : iConfig_(iC
   trajTrackCollToken_	    = consumes<TrajTrackAssociationCollection>(edm::InputTag(trajTrackCollectionInput));
   
   trackingErrorToken_	    = consumes< edm::EDCollection<DetId> >(edm::InputTag("siPixelDigis"));
-  SiPixelRawDataErrorToken_ = consumes< edm::DetSetVector<SiPixelRawDataError> >(edm::InputTag("siPixelDigis"));
+  SiPixelRawDataErrorToken_ = consumes< edm::DetSetVector<SiPixelRawDataError> >(edm::InputTag("PBDigis"));
   userErrorToken_	    = consumes< edm::EDCollection<DetId> >(edm::InputTag("siPixelDigis", "UserErrorModules"));
+
+  detIdFromFED40_[1]=344133892; // BmO_D3_BLD11_PNL1
+  detIdFromFED40_[2]=344133892; // BmO_D3_BLD11_PNL1
+  detIdFromFED40_[3]=344134148; // BmO_D3_BLD11_PNL2
+  detIdFromFED40_[4]=344134148; // BmO_D3_BLD11_PNL2
+  detIdFromFED40_[7]=344132868; // BmO_D3_BLD10_PNL1
+  detIdFromFED40_[8]=344132868; // BmO_D3_BLD10_PNL1
+  detIdFromFED40_[9]=344133124; // BmO_D3_BLD10_PNL2
+  detIdFromFED40_[10]=344133124; // BmO_D3_BLD10_PNL2
+  detIdFromFED40_[25]=344131844; // BmI_D3_BLD2_PNL1
+  detIdFromFED40_[26]=344131844; // BmI_D3_BLD2_PNL1
+  detIdFromFED40_[27]=344132100; // BmI_D3_BLD2_PNL2
+  detIdFromFED40_[28]=344132100; // BmI_D3_BLD2_PNL2
+  detIdFromFED40_[31]=344130820; // BmI_D3_BLD3_PNL1
+  detIdFromFED40_[32]=344130820; // BmI_D3_BLD3_PNL1
+  detIdFromFED40_[33]=344131076; // BmI_D3_BLD3_PNL2
+  detIdFromFED40_[34]=344131076; // BmI_D3_BLD3_PNL2
+
+  if (iConfig_.exists("PositionCorrections")) {
+    Parameters positionCorrections = iConfig_.getUntrackedParameter<Parameters>("PositionCorrections");
+    for(Parameters::iterator it = positionCorrections.begin(); it != positionCorrections.end(); ++it) {
+      unsigned int id=(unsigned int)it->getParameter<unsigned int>("id");
+      float dx=(float)it->getParameter<double>("dx");
+      float dy=(float)it->getParameter<double>("dy");
+      posCorr_[id]=PositionCorrection(dx, dy);
+    }
+  }
+
+  for (std::map<unsigned int,PositionCorrection>::iterator it=posCorr_.begin(); it!=posCorr_.end(); it++) {
+    std::cout<<"Correcting position for "<<it->first<<" with ("<<it->second.dx<<", "<<it->second.dy<<")"<<std::endl;
+  }
+
+
+  if (iConfig_.exists("FiducialRegions")) {
+    Parameters fiducialRegions = iConfig_.getUntrackedParameter<Parameters>("FiducialRegions");
+    for(Parameters::iterator it = fiducialRegions.begin(); it != fiducialRegions.end(); ++it) {
+      unsigned int id=(unsigned int)it->getParameter<unsigned int>("id");
+      float marginX=(float)it->getParameter<double>("marginX");
+      float marginY=(float)it->getParameter<double>("marginY");
+      std::vector<int> rocX = it->getParameter<std::vector<int> > ("rocX");
+      std::vector<int> rocY = it->getParameter<std::vector<int> > ("rocY");
+      if (rocX.size()!=rocY.size()) {
+	std::cout<<"***ERROR: Skipping detId. Number of ROC X indices is not equal to Y for det Id "<<id<<std::endl;
+	continue;
+      }
+      std::vector<FiducialRegion> rocs;
+      for (size_t i=0; i<rocX.size(); i++) rocs.push_back(FiducialRegion(rocX[i], rocY[i], marginX, marginY));
+      fidReg_[id]=rocs;
+    }
+  }
+
+  for (std::map<unsigned int,std::vector<FiducialRegion> >::iterator it=fidReg_.begin(); it!=fidReg_.end(); it++) {
+    std::cout<<"Fiducial regions in detID "<<it->first<< " are in ROCs" << std::endl;
+    for (size_t i=0; i<it->second.size(); i++) std::cout<< it->second[i].print() <<std::endl;
+  }
+
 }
 
 PilotBladeStudy::~PilotBladeStudy() { }
@@ -195,19 +251,21 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   std::map<uint32_t, int> federrors;
   readFEDErrors(iEvent, iSetup, SiPixelRawDataErrorToken_, trackingErrorToken_, federrors);
   
+  for (std::map<uint32_t, int>::iterator it=federrors.begin(); it!=federrors.end(); it++) printf("DetId %d -- FED error %d\n", it->first, it->second);
+
   // ----------------------- Analyze digis -----------------------
   analyzeDigis(iEvent, iSetup, siPixelDigisToken_, federrors, 0, cosmicsCase_);
-  analyzeDigis(iEvent, iSetup, PBDigisToken_, federrors, 1, cosmicsCase_);
+  analyzeDigis(iEvent, iSetup, PBDigisToken_, federrors, 0, cosmicsCase_);
   
   // ----------------------- Analyze clusters ----------------------
   analyzeClusters(iEvent, iSetup, siPixelClustersToken_, federrors, 0, cosmicsCase_); 
-  analyzeClusters(iEvent, iSetup, PBClustersToken_, federrors, 1, cosmicsCase_);
+  analyzeClusters(iEvent, iSetup, PBClustersToken_, federrors, 0, cosmicsCase_);
   
   // ------------------------ Analyze tracks -----------------------
   analyzeTracks(iEvent, iSetup, trajTrackCollToken_, federrors, 0, cosmicsCase_); 
   
   // --------------------- Analyze trajectories --------------------
-  analyzeTrajs(iEvent, iSetup, trajTrackCollToken_, federrors, 1, cosmicsCase_); 
+  analyzeTrajs(iEvent, iSetup, trajTrackCollToken_, federrors, 0, cosmicsCase_); 
   std::cout << "Number of PB Hits: " << nPBHit << " out of " 
 	    << nPixelHit << " Pixel hit and " << nStripHit
 	    << " Strip hit in the events so far. " << std::endl;
@@ -257,9 +315,6 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
 //   trajTree_->SetBranchAddress("clust_pixX", &traj.clu.pixX);
 //   trajTree_->SetBranchAddress("clust_pixY", &traj.clu.pixY);
   trajTree_->SetBranchAddress("track",      &traj.trk);
-  traj.nPixelHit = nPixelHit;
-  traj.nStripHit = nStripHit;
-  traj.nPBHit    = nPBHit;
   for (size_t itrk=0; itrk<trajmeas_.size(); itrk++) {
     for (size_t i=0; i<trajmeas_[itrk].size(); i++) {
       float minD=10000.;
@@ -276,6 +331,10 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       }
       trajmeas_[itrk][i].d_hit = minD;
       traj = trajmeas_[itrk][i];
+      traj.nPixelHit = nPixelHit;
+      traj.nStripHit = nStripHit;
+      traj.nPBHit    = nPBHit;
+      traj.trk = tracks_[itrk];
       trajTree_->Fill();
     }
   }
@@ -385,15 +444,15 @@ PilotBladeStudy::ModuleData PilotBladeStudy::getModuleData
     } 
    // Pilot Blade
     else {
-    offline.det= online.det= 1;
-    offline.disk = pxfid.disk();
-    offline.side = online.side = pxfid.side();
-    online.disk = offline.disk*(offline.side*2-3);
-    offline.blade= pxfid.blade();
-    offline.panel= online.panel= pxfid.panel();
-    offline.module = online.module = pxfid.module();
+      offline.det= online.det= 1;
+      offline.disk = pxfid.disk();
+      offline.side = online.side = pxfid.side();
+      online.disk = offline.disk*(offline.side*2-3);
+      offline.blade= pxfid.blade();
+      offline.panel= online.panel= pxfid.panel();
+      offline.module = online.module = pxfid.module();
 
-    if (scheme.find("on")==std::string::npos) return offline;
+      if (scheme.find("on")==std::string::npos) return offline;
       return online;
     }
   }
@@ -406,7 +465,7 @@ void PilotBladeStudy::readFEDErrors(const edm::Event& iEvent,
                                     const edm::EventSetup& iSetup, 
 				    edm::EDGetTokenT< edm::DetSetVector<SiPixelRawDataError> > RawDataErrorToken_,
 				    edm::EDGetTokenT< edm::EDCollection<DetId> > trackingErrorToken_,
-				    std::map<uint32_t, int> federrors ){  
+				    std::map<uint32_t, int>& federrors ){  
   bool DEBUG = false;
   int federr[16];
   for (int i=0; i<16; i++) federr[i]=0;
@@ -429,14 +488,15 @@ void PilotBladeStudy::readFEDErrors(const edm::Event& iEvent,
           std::cout << "Word64: " << itPixelError->getWord64() << std::endl;
           std::cout << "Type: " << itPixelError->getType() << std::endl;
           std::cout << "Error message: " << itPixelError->getMessage() << std::endl;
+	  std::cout << "detId" << itPixelErrorSet->detId() << std::endl;
         }
+	int type = itPixelError->getType();
+	if (type>24&&type<=40) federr[type-25]++;
+	else std::cout<<"ERROR: Found new FED error with not recognised Error type: "<<type<<std::endl;
         if (itPixelErrorSet->detId()!=0xffffffff) {
           DetId detId(itPixelErrorSet->detId());
-          int type = itPixelError->getType();
           federrors.insert(std::pair<uint32_t,int>(detId.rawId(), type));
-          if (type>24&&type<=40) federr[type-25]++;
-          else std::cout<<"ERROR: Found new FED error with not recognised Error type: "<<type<<std::endl;
-        }
+	}
       }
     }
     for (int i=0; i<16; i++) {
@@ -518,9 +578,9 @@ void PilotBladeStudy::analyzeDigis(const edm::Event& iEvent,
         if (verbosity>1) std::cout << "Not a pixel digi -- skipping the event" << std::endl;
         continue;
       }
-      // Take only the FPIX pixel digis
-      if (subDetId!=PixelSubdetector::PixelEndcap && cosmicsCase==false) {
-	if (verbosity>1) std::cout << "Not a FPIX digi -- skipping the event" << std::endl;
+      // Take only the FPIX- pixel digis
+      if ((subDetId!=PixelSubdetector::PixelEndcap || module_on.disk>0) && cosmicsCase==false) {
+	if (verbosity>1) std::cout << "Not a FPIX -Z digi -- skipping it" << std::endl;
         continue;
       }
       
@@ -589,6 +649,9 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
       unsigned int subDetId=detId.subdetId();
       const PixelGeomDetUnit *pixdet = (const PixelGeomDetUnit*) tkgeom->idToDetUnit(detId);         
       
+      ModuleData module = getModuleData(detId.rawId(), federrors);
+      ModuleData module_on = getModuleData(detId.rawId(), federrors, "online");
+
       if (DEBUGClusters) std::cout << "Looping on the cluster sets ";
       
       // Take only pixel clusters. If this is a cosmicsCase then we save everything
@@ -598,6 +661,12 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
         continue;
       }
       
+      // Take only the FPIX- pixel clusters
+      if ((subDetId!=PixelSubdetector::PixelEndcap || module_on.disk>0) && cosmicsCase==false) {
+	if (verbosity>1) std::cout << "Not a FPIX -Z cluster -- skipping it" << std::endl;
+        continue;
+      }
+
       // Create a itarator that loops on the clusters which are in the set
       edmNew::DetSet<SiPixelCluster>::const_iterator itCluster=itClusterSet->begin();
       for(; itCluster!=itClusterSet->end(); ++itCluster) {
@@ -617,6 +686,8 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
 	
         clust.x=itCluster->x();
         clust.y=itCluster->y();
+        clust.lx=lp.x();
+	clust.ly=lp.y();
         clust.glx = gp.x();
         clust.gly = gp.y();
         clust.glz = gp.z();
@@ -624,8 +695,8 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
 	clust.size=itCluster->size();
         clust.charge=itCluster->charge()/1000.0;
         
-        clust.mod    = getModuleData(detId.rawId(), federrors);
-        clust.mod_on = getModuleData(detId.rawId(), federrors, "online");
+        clust.mod    = module;
+        clust.mod_on = module_on;
 	
 	if (!nclu_mod.count(detId.rawId())) nclu_mod[detId.rawId()] = 0;
 	nclu_mod[detId.rawId()]++;
@@ -675,6 +746,8 @@ void PilotBladeStudy::analyzeTracks(const edm::Event& iEvent,
       std::vector<TrajectoryMeasurement>::const_iterator itTraj;
       for(itTraj=trajMeasurements.begin(); itTraj!=trajMeasurements.end(); ++itTraj) {
 	TransientTrackingRecHit::ConstRecHitPointer recHit = itTraj->recHit();
+
+	if(recHit->geographicalId().det() != DetId::Tracker) continue;
 	uint subDetId = recHit->geographicalId().subdetId();
       
 	if (recHit->isValid()) {
@@ -723,31 +796,17 @@ void PilotBladeStudy::analyzeTrajs(const edm::Event& iEvent,
       std::vector<TrajectoryMeasurement> trajMeasurements = traj.measurements();
       std::vector<TrajectoryMeasurement>::const_iterator itTraj;
       std::vector<TrajMeasurement> trajmeas; 
-      TrajMeasurement meas;
       
       for(itTraj=trajMeasurements.begin(); itTraj!=trajMeasurements.end(); ++itTraj) {
 	
 	TransientTrackingRecHit::ConstRecHitPointer recHit = itTraj->recHit();
-	uint subDetId = recHit->geographicalId().subdetId();
-	
-	if (verbosity>1) std::cout << "detector ID: " << subDetId << std::endl;
 	
 	// Cutting on which trajectories we process
 	if(recHit->geographicalId().det() != DetId::Tracker) continue;
+
+	uint subDetId = recHit->geographicalId().subdetId();
+	if (verbosity>1) std::cout << "detector ID: " << subDetId << std::endl;
 		
-	if( (subDetId == 3 || subDetId == 4 || subDetId == 5 ||subDetId == 6) && cosmicsCase == false) {
-          if (verbosity>2) std::cout << " Hit found on the Strip detector " << std::endl;
-          continue;
-        }
-                
-        meas.mod    = getModuleData(recHit->geographicalId().rawId(), federrors);
-        meas.mod_on = getModuleData(recHit->geographicalId().rawId(), federrors, "online");
-		
-	// Hit type codes: valid = 0, missing = 1, inactive = 2
-	if 	(recHit->getType() == TrackingRecHit::valid) 	meas.type=0;
-        else if (recHit->getType() == TrackingRecHit::missing) 	meas.type=1;
-        else if (recHit->getType() == TrackingRecHit::inactive) meas.type=2;
-	
 	if      (subDetId == PixelSubdetector::PixelBarrel) nPixelHit++;
 	else if (subDetId == PixelSubdetector::PixelEndcap) nPixelHit++;
 	else if (subDetId == StripSubdetector::TIB) nStripHit++;
@@ -755,6 +814,22 @@ void PilotBladeStudy::analyzeTrajs(const edm::Event& iEvent,
 	else if (subDetId == StripSubdetector::TID) nStripHit++;
 	else if (subDetId == StripSubdetector::TEC) nStripHit++;
 
+	if( (subDetId == 3 || subDetId == 4 || subDetId == 5 ||subDetId == 6) && cosmicsCase == false) {
+          if (verbosity>2) std::cout << " Hit found on the Strip detector " << std::endl;
+          continue;
+        }
+
+	TrajMeasurement meas;
+                
+        meas.mod    = getModuleData(recHit->geographicalId().rawId(), federrors);
+        meas.mod_on = getModuleData(recHit->geographicalId().rawId(), federrors, "online");
+		
+	// Hit type codes: valid = 0, missing = 1, inactive = 2
+	meas.type=NOVAL_I;
+	if 	(recHit->getType() == TrackingRecHit::valid) 	meas.type=0;
+        else if (recHit->getType() == TrackingRecHit::missing) 	meas.type=1;
+        else if (recHit->getType() == TrackingRecHit::inactive) meas.type=2;
+	
 	TrajectoryStateOnSurface predTrajState=trajStateComb(itTraj->forwardPredictedState(),
                                                                itTraj->backwardPredictedState());       
 	
@@ -762,7 +837,18 @@ void PilotBladeStudy::analyzeTrajs(const edm::Event& iEvent,
         meas.ly=predTrajState.localPosition().y();
 	meas.lx_err=predTrajState.localError().positionError().xx();
         meas.ly_err=predTrajState.localError().positionError().yy();
-	
+
+	std::map<unsigned int,std::vector<FiducialRegion> >::iterator it_mod=fidReg_.find(recHit->geographicalId().rawId());
+	if (it_mod!=fidReg_.end()) {
+	  int rocx=meas.getROCx();
+	  int rocy=meas.getROCy();
+	  for (size_t i=0; i<it_mod->second.size(); i++) {
+	    if (rocx==it_mod->second[i].rocX && rocy==it_mod->second[i].rocY) {
+	      if (meas.isWithinROCFiducial(it_mod->second[i].marginX, it_mod->second[i].marginY)) meas.type+=100;
+	    }
+	  }
+	}
+
         meas.glx=predTrajState.globalPosition().x();
         meas.gly=predTrajState.globalPosition().y();
         meas.glz=predTrajState.globalPosition().z();
@@ -819,7 +905,7 @@ void PilotBladeStudy::findClosestClusters(
 	      edm::EDGetTokenT< edmNew::DetSetVector<SiPixelCluster> > clusterColl,
 	      ClustData& clu) {
   
-  bool DEBUGfindClust = true;
+  bool DEBUGfindClust = false;
   
   // Choose the CPE Estimator that will be used to estimate the LocalPoint of the nearest cluster
   edm::ESHandle<PixelClusterParameterEstimator> cpEstimator;
@@ -880,12 +966,20 @@ void PilotBladeStudy::findClosestClusters(
 	if (DEBUGfindClust) std::cout << "PixelClusterParameterEstimator: " << lp << std::endl;
       }
       
-      float D = sqrt((lp.x()-lx)*(lp.x()-lx)+(lp.y()-ly)*(lp.y()-ly));
+      float lpx=lp.x();
+      float lpy=lp.y();
+      std::map<unsigned int,PositionCorrection>::const_iterator itCorr=posCorr_.find(detId.rawId());
+      if (itCorr!=posCorr_.end()) {
+	lpx+=itCorr->second.dx;
+	lpy+=itCorr->second.dy;
+      }
+
+      float D = sqrt((lpx-lx)*(lpx-lx)+(lpy-ly)*(lpy-ly));
       if (DEBUGfindClust) std::cout << "Value of the D: " << D << std::endl; 
       if (D<minD) {
 	minD=D;
-	dx_cl=lp.x();
-	dy_cl=lp.y();
+	dx_cl=lpx;
+	dy_cl=lpy;
 	itClosestCluster = itCluster;
       } 
     } // loop on cluster sets
