@@ -200,8 +200,8 @@ int delay(uint run, const uint ls) {
     delay=40; return delay; }
 
   if (run>274954) { 
-    delay=62; return delay; }
-// this should be checked
+    delay=49; return delay; }
+// WBC=163. Globaldelay25=24ns
 
   return delay;
 }
