@@ -1,3 +1,4 @@
+//CondFormats/SiPixelObjects/
 #include "CondFormats/SiPixelObjects/interface/FrameConversion.h"
 #include "DataFormats/SiPixelDetId/interface/PixelBarrelName.h"
 #include "DataFormats/SiPixelDetId/interface/PixelEndcapName.h"
