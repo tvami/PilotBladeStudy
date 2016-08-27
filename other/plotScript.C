@@ -164,10 +164,16 @@ int delay(uint run, const uint ls) {
   if (run==274102 || run==274103 || run==274104 || run==274105 || run==274106 || run==274107) { 
     delay=45; return delay; }
 
-  if (run==274108 || run==274113 || run==274114 || run==274115 || run==274122 || run==274123 || run==274132 || run==274133 || run==274134 || run==274135 || run==274138 || run==274139 || run==274141 || run==274142 || run==274146 || run==274147 || run==274148 || run==274149 || run==274150 || run==274151 || run==274152 || run==274154 || run==274155 || run==274156 || run==274157) { 
+  if (run==274108 || run==274113 || run==274114 || run==274115 || run==274122 || run==274123 || run==274132 || run==274133 || run==274134 || run==274135 
+|| run==274138 || run==274139 || run==274141 || run==274142 || run==274146 || run==274147 || run==274148 || run==274149 || run==274150 || run==274151 || run==274152 
+|| run==274154 || run==274155 || run==274156 || run==274157) { 
     delay=70; return delay; }
 
-  if (run==274159 || run==274192 || run==274195 || run==274196 || run==274246 || run==274247 || run==274248 || run==274256 || run==274263 || run==274264 || run==274266 || run==274268 || run==274270 || run==274274 || run==274275 || run==274276 || run==274280 || run==274281 || run==274289 || run==274290 || run==274294 || run==274295 || run==274300 || run==274305 || run==274306 || run==274309 || run==274311 || run==274313 || run==274317 || run==274320 || run==274324 || run==274337 || run==274344 || run==274345 || run==274346 || run==274347 || run==274349 || run==274356 || run==274363 || run==274366 || run==274367 || run==274368 || run==274369 || run==274372 || run==274373 || run==274374 || run==274377 || run==274378 || run==274379 || run==274380 || run==274381 || run==274382 || run==274384 || run==274385) { 
+  if (run==274159 || run==274192 || run==274195 || run==274196 || run==274246 || run==274247 || run==274248 || run==274256 || run==274263 || run==274264 
+|| run==274266 || run==274268 || run==274270 || run==274274 || run==274275 || run==274276 || run==274280 || run==274281 || run==274289 || run==274290 || run==274294 
+|| run==274295 || run==274300 || run==274305 || run==274306 || run==274309 || run==274311 || run==274313 || run==274317 || run==274320 || run==274324 || run==274337 
+|| run==274344 || run==274345 || run==274346 || run==274347 || run==274349 || run==274356 || run==274363 || run==274366 || run==274367 || run==274368 || run==274369 
+|| run==274372 || run==274373 || run==274374 || run==274377 || run==274378 || run==274379 || run==274380 || run==274381 || run==274382 || run==274384 || run==274385) { 
     delay=82; return delay; }
 
   if (run==274386 || run==274387) { 
@@ -244,8 +250,8 @@ void digis()
   
 
   TChain* filechain = new TChain("filechain");
- // filechain->Add("/data/vami/projects/pilotBlade/pp2016ReProcessing_v3/CMSSW_8_0_8/src/plotting/August/*.root");
-  filechain->Add("/data/vami/projects/pilotBlade/pp2016ReProcessing_v3/CMSSW_8_0_8/src/plotting/August/nTuplePilotBlade_All_1.root");
+  filechain->Add("/data/vami/projects/pilotBlade/pp2016ReProcessing_v3/CMSSW_8_0_8/src/plotting/August/*.root");
+ //  filechain->Add("/data/vami/projects/pilotBlade/pp2016ReProcessing_v3/CMSSW_8_0_8/src/plotting/August/nTuplePilotBlade_All_1.root");
   // Create the histograms
   std::vector<std::vector<TH1*> > hists;
 
