@@ -225,14 +225,11 @@ std::string name(int detid) {
   return std::string("");
 }
 
-void digis()
+void digis(bool saveAll, std::string save_dir, const char* format, TChain* filechain)
 {
-  gStyle->SetOptStat(1100);
-  //gStyle->SetOptStat(111111111);
-  gStyle->SetOptTitle(1);
+ 
   bool saveDigis = 0;
-  std::string save_dir = "./";
-  const char* format = ".png";
+  if (saveAll) saveDigis = 1;
   Int_t selectDelay=-9999;
   Long64_t reduceFraction=0;
   Int_t skipFiles=0;
@@ -248,11 +245,7 @@ void digis()
   }
   const std::map<int,int>& idx = idx_map;
   
-
-  TChain* filechain = new TChain("filechain");
-  filechain->Add("/data/vami/projects/pilotBlade/pp2016ReProcessing_v3/CMSSW_8_0_8/src/plotting/August/*.root");
- //  filechain->Add("/data/vami/projects/pilotBlade/pp2016ReProcessing_v3/CMSSW_8_0_8/src/plotting/August/nTuplePilotBlade_All_1.root");
-  // Create the histograms
+// Create the histograms
   std::vector<std::vector<TH1*> > hists;
 
   std::vector<TH1F *> PBADCDist;
@@ -422,15 +415,13 @@ void digis()
     }
   }
 }
-
-void clusters()
+// ---------------------------------------------------------------------------
+// -----------------------------Clusters--------------------------------------
+// ---------------------------------------------------------------------------
+void clusters(bool saveAll, std::string save_dir, const char* format, TChain* filechain)
 {
-  gStyle->SetOptStat(1100);
-  //gStyle->SetOptStat(111111111);
-  gStyle->SetOptTitle(1);
   bool saveClusters = 0;
-  std::string save_dir = "./";
-  const char* format = ".png";
+  if (saveAll) saveClusters = 1;
   Int_t selectDelay=-9999;
   Long64_t reduceFraction=0;
   Int_t skipFiles=0;
@@ -446,11 +437,7 @@ void clusters()
   }
   const std::map<int,int>& idx = idx_map;
   
-
-  TChain* filechain = new TChain("filechain");
- // filechain->Add("/data/vami/projects/pilotBlade/pp2016ReProcessing_v3/CMSSW_8_0_8/src/plotting/August/*.root");
-  filechain->Add("/data/vami/projects/pilotBlade/pp2016ReProcessing_v3/CMSSW_8_0_8/src/plotting/August/nTuplePilotBlade_All_1.root");
-  // Create the histograms
+// Create the histograms
   std::vector<std::vector<TH1*> > hists;
 
   std::vector<TH1F *> PBClusterCharge;
@@ -690,15 +677,14 @@ void clusters()
     }
   }
 }
+// ---------------------------------------------------------------------------
+// -----------------------------Rechits---------------------------------------
+// ---------------------------------------------------------------------------
 
-void rechits()
+void rechits(bool saveAll, std::string save_dir, const char* format, TChain* filechain)
 {
-  gStyle->SetOptStat(1100);
-  //gStyle->SetOptStat(111111111);
-  gStyle->SetOptTitle(1);
-  bool saveRecHits = 1;
-  std::string save_dir = "./";
-  const char* format = ".png";
+  bool saveRecHits = 0;
+  if (saveAll) saveRecHits = 1;
   Int_t selectDelay=-9999;
   Long64_t reduceFraction=0;
   Int_t skipFiles=0;
@@ -714,35 +700,30 @@ void rechits()
   }
   const std::map<int,int>& idx = idx_map;
   
-
-  TChain* filechain = new TChain("filechain");
- // filechain->Add("/data/vami/projects/pilotBlade/pp2016ReProcessing_v3/CMSSW_8_0_8/src/plotting/August/*.root");
-  filechain->Add("/data/vami/projects/pilotBlade/pp2016ReProcessing_v3/CMSSW_8_0_8/src/plotting/August/nTuplePilotBlade_All_1.root");
   // Create the histograms
   std::vector<std::vector<TH1*> > hists;
 
-
-  std::vector<TH2F *> PBHitsGlobal;
+  //tempstd::vector<TH2F *> PBHitsGlobal;
   std::vector<TH1F *> PBHitCluDx;
   std::vector<TH1F *> PBHitCluDy;
 
-  std::vector<TH1F *> PBHitEffVsDel_num;
-  std::vector<TH1F *> PBHitEffVsDel_den;
+  //tempstd::vector<TH1F *> PBHitEffVsDel_num;
+  //tempstd::vector<TH1F *> PBHitEffVsDel_den;
 
-  std::vector<TH1F *> PBClustersVsDel_num;
-  std::vector<TH1F *> PBClustersVsDel_den;
+  //tempstd::vector<TH1F *> PBClustersVsDel_num;
+  //tempstd::vector<TH1F *> PBClustersVsDel_den;
  
   for (size_t imod=0; imod<detids.size(); imod++) {
 
     std::vector<TH1*> vh;
     TH1 *h;
 
-    PBHitsGlobal.push_back((TH2F*)(h=new TH2F(Form("PBHitsGlobal_%d", detids[imod]), Form("RecHits in %s;x;y", name(detids[imod]).c_str()), 3200,-16,16, 3200,-16,16))); vh.push_back(h);
+    //temp PBHitsGlobal.push_back((TH2F*)(h=new TH2F(Form("PBHitsGlobal_%d", detids[imod]), Form("RecHits in %s;x;y", name(detids[imod]).c_str()), 3200,-16,16, 3200,-16,16))); vh.push_back(h);
     PBHitCluDx.push_back((TH1F*)(h=new TH1F(Form("PBHitCluDx_%d", detids[imod]),  Form("Rechit to nearest cluster distance in %s;dx [cm];Yield", name(detids[imod]).c_str()), 400,-2,2))); vh.push_back(h);
     PBHitCluDy.push_back((TH1F*)(h=new TH1F(Form("PBHitCluDy_%d", detids[imod]),  Form("Rechit to nearest cluster distance in %s;dy [cm];Yield", name(detids[imod]).c_str()), 1000,-7,3))); vh.push_back(h);
     
-    PBHitEffVsDel_num.push_back((TH1F*)(h=new TH1F(Form("PBHitEffVsDel_num_%d", detids[imod]),  Form("RecHit efficiency vs Delay in %s;Delay;Efficiency", name(detids[imod]).c_str()), 150, -30, 120))); vh.push_back(h);
-    PBHitEffVsDel_den.push_back((TH1F*)(h=new TH1F(Form("PBHitEffVsDel_den_%d", detids[imod]),  Form("Num of RecHits vs Delay in %s;Delay;Num of hits", name(detids[imod]).c_str()), 150, -30, 120))); vh.push_back(h);
+    //temp PBHitEffVsDel_num.push_back((TH1F*)(h=new TH1F(Form("PBHitEffVsDel_num_%d", detids[imod]),  Form("RecHit efficiency vs Delay in %s;Delay;Efficiency", name(detids[imod]).c_str()), 150, -30, 120))); vh.push_back(h);
+    //temp PBHitEffVsDel_den.push_back((TH1F*)(h=new TH1F(Form("PBHitEffVsDel_den_%d", detids[imod]),  Form("Num of RecHits vs Delay in %s;Delay;Num of hits", name(detids[imod]).c_str()), 150, -30, 120))); vh.push_back(h);
     //PBClustersVsDel_num.push_back((TH1F*)(h=new TH1F(Form("PBClustersVsDel_num_%d", detids[imod]),  Form("Avg num of clusters per event vs Delay in %s;Delay;Avg num of clusters", name(detids[imod]).c_str()), 150, -30, 120))); vh.push_back(h);
     //PBClustersVsDel_den.push_back((TH1F*)(h=new TH1F(Form("PBClustersVsDel_den_%d", detids[imod]),  Form("Total number of events vs Delay in %s;Delay;num of events", name(detids[imod]).c_str()), 150, -30, 120))); vh.push_back(h);
     
@@ -798,6 +779,7 @@ void rechits()
       
       std::map<int,int>::const_iterator it_idx=idx.find(rawid);
       if (it_idx==idx.end()) continue;
+      if (traj.onEdge==1&&traj.type!=2) continue;
       int imod = it_idx->second;
 
       // Correction to cluster positions  344132868, 344134148, 344131076, 344132100, 344130820
@@ -840,9 +822,9 @@ void rechits()
 //       }
 
       if (evt.federrs_size==0 && module_on.federr==0) {
-	PBHitEffVsDel_den[imod]->Fill(delay(evt.run, evt.ls));
-	if (fabs(dx_cl)<0.05 && fabs(dy_cl)<0.05) PBHitEffVsDel_num[imod]->Fill(delay(evt.run, evt.ls));
-	PBHitsGlobal[imod]->Fill(traj.glx, traj.gly);
+	//temp PBHitEffVsDel_den[imod]->Fill(delay(evt.run, evt.ls));
+	//temp if (fabs(dx_cl)<0.05 && fabs(dy_cl)<0.05) PBHitEffVsDel_num[imod]->Fill(delay(evt.run, evt.ls));
+	//temp PBHitsGlobal[imod]->Fill(traj.glx, traj.gly);
 	PBHitCluDx[imod]->Fill(dx_cl);
 	PBHitCluDy[imod]->Fill(dy_cl);
       }
@@ -870,7 +852,7 @@ void rechits()
     std::map<int,int>::const_iterator it_idx=idx.find(1);
     for (size_t imod=0; imod<detids.size(); imod++) {
       //if (it_idx!=idx.end() && imod!=it_idx->second) PBClustersVsDel_num[imod]->Divide(PBClustersVsDel_num[it_idx->second]); //average ratio of PB clusters to FPix clusters in events with FPix clusters
-      PBHitEffVsDel_num[imod]->Divide(PBHitEffVsDel_den[imod]);
+      //temp PBHitEffVsDel_num[imod]->Divide(PBHitEffVsDel_den[imod]);
     }
     //if (it_idx!=idx.end()) PBClustersVsDel_num[it_idx->second]->Divide(PBClustersVsDel_den[it_idx->second]); // fraction of events with FPix clusters in all events
   }
@@ -940,7 +922,17 @@ void rechits()
 
 
 void plotScript() {
-   digis();
-   clusters();
-   rechits();
+  gStyle->SetOptStat(1100);
+  //gStyle->SetOptStat(111111111);
+  gStyle->SetOptTitle(1);
+  bool saveAll = false;
+  std::string save_dir = "./";
+  const char* format = ".png";
+
+  TChain* filechain = new TChain("filechain");
+  filechain->Add("/data/vami/projects/pilotBlade/pp2016ReProcessing_v3/CMSSW_8_0_8/src/plotting/August/nTuplePilotBlade_All_*.root");
+
+  digis(saveAll, save_dir, format, filechain);
+  clusters(saveAll, save_dir, format, filechain);
+  rechits(saveAll, save_dir, format, filechain);
 }
