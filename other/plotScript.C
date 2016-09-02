@@ -199,11 +199,11 @@ int delay(uint run, const uint ls) {
   if (run==274445 || run==274446 || run==274448 || run==274449 || run==274450 || run==274452 || run==274455 || run==274463 || run==274468 || run==274469 || run==274470 || run==274471 || run==274495 || run==274503 || run==274505 || run==274506 || run==274507 || run==274508 || run==274510 || run==274512 || run==274516 || run==274517 || run==274569 || run==274718 || run==274720 || run==274722 || run==274724 || run==274726 || run==274728 || run==274733 || run==274743 || run==274744 || run==274746 || run==274748 || run==274749 || run==274758 || run==274771 || run==274774 || run==274775 || run==274776 || run==274777 || run==274778 || run==274779 || run==274780 || run==274781 || run==274783 || run==274784 || run==274785 || run==274799 || run==274802 || run==274804 || run==274806 || run==274810 || run==274813 || run==274814 || run==274815 || run==274817 || run==274850 || run==274856 || run==274861 || run==274864 || run==274866 || run==274868 || run==274869 || run==274873 || run==274875 || run==274877 || run==274878 || run==274879 || run==274880 || run==274881 || run==274883 || run==274885 || run==274887 || run==274888 || run==274939 || run==274940 || run==274941 || run==274942 || run==274943 || run==274944 || run==274945 || run==274947 || run==274948 || run==274950 || run==274951 || run==274953 || run==274954) { 
     delay=40; return delay; }
 
-  if (run>274954) { 
+  if (run==279071 || run==279072 || run==279073) { 
     delay=49; return delay; }
 // WBC=163. Globaldelay25=24ns
 
-  if (run>279853) { 
+  if (run==279853 || run==279854 || run==279855 || run==279856 || run==279857 || run==279858 || run==279859 || run==279860 || run==279861 || run==279862 || run==279864) { 
     delay=124; return delay; }
 // this above is not true.... the truth is: WBC moved 3 BX for BmI module and 4 BX for BmO modules.
 
