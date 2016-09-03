@@ -112,7 +112,7 @@ void PilotBladeStudy::beginJob() {
   
   if (iConfig_.exists("cosmicsCase")) {
     cosmicsCase_=iConfig_.getParameter<bool>("cosmicsCase");
-    std::cout<<"This is a Cosmics run "<<std::endl;
+    std::cout<<"This is a Cosmics run: "<< cosmicsCase_ <<std::endl;
   }
   
   if (iConfig_.exists("triggerTag")) {
