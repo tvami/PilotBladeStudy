@@ -462,6 +462,7 @@ void clusters(bool saveAll, std::string save_dir, const char* format, TChain* fi
 
   std::vector<TH1F *> PBClusterFEDErrVsDel;
   std::vector<TH1F *> PBClusterFEDErrType;
+  std::vector<TH1F *> PBClusterFEDErrTypePerEvent;
   
  
   for (size_t imod=0; imod<detids.size(); imod++) {
@@ -486,7 +487,8 @@ void clusters(bool saveAll, std::string save_dir, const char* format, TChain* fi
     PBClustersVsDel_den.push_back((TH1F*)(h=new TH1F(Form("PBClustersVsDel_den_%d", detids[imod]),  Form("Total number of events vs Delay in %s;Delay;num of events", name(detids[imod]).c_str()), 150, -30, 120))); vh.push_back(h);
 
     PBClusterFEDErrVsDel.push_back((TH1F*)(h=new TH1F(Form("PBClusterFEDErrVsDel_%d", detids[imod]),  Form("Fraction of clusters with FED error vs Delay in %s;Delay;Clusters with FED err", name(detids[imod]).c_str()), 150, -30, 120))); vh.push_back(h);
-    PBClusterFEDErrType.push_back((TH1F*)(h=new TH1F(Form("PBClusterFEDErrType_%d", detids[imod]),  Form("Fraction of clusters with FED error vs Error type in %s;Error type;Clusters with FED err", name(detids[imod]).c_str()), 16, 24.5, 40.5))); vh.push_back(h);    
+    PBClusterFEDErrType.push_back((TH1F*)(h=new TH1F(Form("PBClusterFEDErrType_%d", detids[imod]),  Form("Fraction of clusters with FED error vs Error type in %s;Error type;Cluster fraction", name(detids[imod]).c_str()), 16, 24.5, 40.5))); vh.push_back(h);    
+    PBClusterFEDErrTypePerEvent.push_back((TH1F*)(h=new TH1F(Form("PBClusterFEDErrTypePerEvent_%d", detids[imod]),  Form("Fraction of events with FED error vs Error type in %s;Error type;Event fraction", name(detids[imod]).c_str()), 16, 24.5, 40.5))); vh.push_back(h);    
     
     hists.push_back(vh);
   }
@@ -507,6 +509,8 @@ void clusters(bool saveAll, std::string save_dir, const char* format, TChain* fi
   EventData evt;
   ClustData clusters;
   TrajMeasData traj;
+  
+  int eventNumber = 0;
 
   TObjArray* fileElements = filechain->GetListOfFiles();
   TIter next(fileElements);
@@ -560,6 +564,7 @@ void clusters(bool saveAll, std::string save_dir, const char* format, TChain* fi
       if (module_on.federr!=0) {
 	PBClusterFEDErrVsDel[imod]->Fill(delay(evt.run, evt.ls));
 	PBClusterFEDErrType[imod]->Fill(module_on.federr);
+	PBClusterFEDErrTypePerEvent[imod]->Fill(module_on.federr);
       }
       if (evt.evt!=currentEvent[imod]) {
 		if (currentEvent[imod]!=-1) {
@@ -587,7 +592,7 @@ void clusters(bool saveAll, std::string save_dir, const char* format, TChain* fi
     // ---------------------- Events ---------------------- 
     TTree* eventTree = (TTree*)f.Get("eventTree");
     eventTree->GetBranch("event")->SetAddress(&evt_);
-
+    eventNumber = eventTree->GetEntries();
     for (Long64_t i=0; i<eventTree->GetEntries(); i++) {
       if (reduceFraction!=0 && i%reduceFraction!=0) continue;
       eventTree->GetEntry(i);
@@ -615,6 +620,8 @@ void clusters(bool saveAll, std::string save_dir, const char* format, TChain* fi
       
       PBClusterFEDErrVsDel[imod]->Scale(1./PBClusterCharge[imod]->GetEntries());
       PBClusterFEDErrType[imod]->Scale(1./PBClusterCharge[imod]->GetEntries());
+      PBClusterFEDErrTypePerEvent[imod]->Scale(1./eventNumber);
+      
     }
     if (it_idx!=idx.end()) PBClustersVsDel_num[it_idx->second]->Divide(PBClustersVsDel_den[it_idx->second]); // fraction of events with FPix clusters in all events
   }
