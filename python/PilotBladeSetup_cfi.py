@@ -23,7 +23,7 @@ SiPixelQualityDBReader = cms.ESSource("PoolDBESSource",
     cms.PSet(
       record = cms.string('SiPixelQualityFromDbRcd'),
       #tag = cms.string('SiPixelQuality_PilotBlade') #tagname for the local DB
-      tag = cms.string('SiPixelQuality_PilotBlade_v1'),  
+      tag = cms.string('SiPixelQuality_phase1_2017_v5'),  
     )
   )
 )
@@ -161,7 +161,7 @@ LorentzAngleSimDBReader = cms.ESSource("PoolDBESSource",
       tag = cms.string('SiPixelLorentzAngleSim_phase1_mc_v2'),     )
   )
 )
-es_prefer_LA = cms.ESPrefer("PoolDBESSource","LorentzAngleSimDBReader")
+es_prefer_LASim = cms.ESPrefer("PoolDBESSource","LorentzAngleSimDBReader")
 #-------------------------------------------------------
 
 ## ---------------------- PB Geometry -------------------
