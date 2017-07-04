@@ -37,16 +37,18 @@ CablingMapDBReader = cms.ESSource("PoolDBESSource",
     authenticationPath = cms.untracked.string('')
   ),
   #connect = cms.string('sqlite_file:/data/vami/projects/PilotBlade/1ConditionDBs/SiPixelCabling_PilotBlade_data.db'), #local DB
-  connect = cms.string('frontier://FrontierPrep/CMS_CONDITIONS'), 
+  #connect = cms.string('frontier://FrontierPrep/CMS_CONDITIONS'), 
+  connect = cms.string('frontier://FrontierProd/CMS_CONDITIONS'), 
  #SiPixelCabling_Ph0andPilotBlade.db --> PB + BPix + FPix
  #SiPixelCabling_PilotBlade.db --> just PB, no BPix, no FPix
   toGet = cms.VPSet(
     cms.PSet(
       record = cms.string('SiPixelFedCablingMapRcd'),
-      label = cms.untracked.string('pilotBlade'), 
+      #label = cms.untracked.string('pilotBlade'), 
       #tag = cms.string('SiPixelFedCablingMap_data'), #tagname for the local DB
       #tag = cms.string('SiPixelCabling_PilotBlade_data_v1'),  
-      tag = cms.string('SiPixelFedCablingMap_FED1240_v2'),  
+      #tag = cms.string('SiPixelFedCablingMap_FED1240_v2'),  
+      tag = cms.string('SiPixelFedCablingMap_phase1_v7'),  
     )
   )
 )
