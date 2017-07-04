@@ -664,10 +664,10 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
       }
       
       // Take only the FPIX- pixel clusters
-      if ((subDetId!=PixelSubdetector::PixelEndcap || module_on.disk>0) && cosmicsCase==false) {
-	if (verbosity>1) std::cout << "Not a FPIX -Z cluster -- skipping it" << std::endl;
-        continue;
-      }
+      //if ((subDetId!=PixelSubdetector::PixelEndcap || module_on.disk>0) && cosmicsCase==false) {
+	//if (verbosity>1) std::cout << "Not a FPIX -Z cluster -- skipping it" << std::endl;
+      // continue;
+      //}
 
       // Create a itarator that loops on the clusters which are in the set
       edmNew::DetSet<SiPixelCluster>::const_iterator itCluster=itClusterSet->begin();
