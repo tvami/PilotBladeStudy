@@ -625,7 +625,7 @@ void PilotBladeStudy::analyzeClusters(const edm::Event& iEvent,
   iEvent.getByToken(clusterColl, clusterCollectionHandle);
   
   if (!clusterCollectionHandle.isValid()) {
-     std::cout<< "The clusterCollectionHandle is invalid" << std::endl;
+     if (verbosity>1) std::cout<< "The clusterCollectionHandle is invalid" << std::endl;
   } else {
     // Create a itarator that loops on the cluster set collection
     const edmNew::DetSetVector<SiPixelCluster>& clusterCollection = *clusterCollectionHandle;
