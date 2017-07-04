@@ -513,7 +513,7 @@ void PilotBladeStudy::readFEDErrors(const edm::Event& iEvent,
   // Run this if siPixelRawDataErrorCollection is not available (eg in RECO)
   if (!siPixelRawDataErrorCollectionHandle.isValid()) {
     
-    std::cout << "siPixelRawDataErrorCollectionHandle is *NOT* valid" << std::endl;
+    if (DEBUG) std::cout << "siPixelRawDataErrorCollectionHandle is *NOT* valid" << std::endl;
     // Tracking Error list
     edm::Handle<edm::EDCollection<DetId> > TrackingErrorDetIdCollectionHandle;
     iEvent.getByToken(trackingErrorToken_, TrackingErrorDetIdCollectionHandle);
