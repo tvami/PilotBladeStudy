@@ -206,6 +206,24 @@ int delay(uint run, const uint ls) {
   if (run==279853 || run==279854 || run==279855 || run==279856 || run==279857 || run==279858 || run==279859 || run==279860 || run==279861 || run==279862 || run==279864) { 
     delay=124; return delay; }
 // this above is not true.... the truth is: WBC moved 3 BX for BmI module and 4 BX for BmO modules.
+  if (run>279864 && run<281602) {delay=62; return delay; }
+
+  if (run==281602) {
+    if (ls<22)  { delay=49; return delay; }
+    if (ls<43)  { delay=99; return delay; }
+    if (ls<66)  { delay=24; return delay; }
+    if (ls<87)  { delay=124; return delay; }
+    if (ls<107)  { delay=74; return delay; }
+  }
+
+  if (run==282093) {
+    if (ls<28)  { delay=50; return delay; }
+    if (ls<50)  { delay=75; return delay; }
+    else		{ delay=100; return delay;}
+  }
+  if (run==282094) {delay=75; return delay; }
+  if (run==282095) {delay=100; return delay; }
+  if (run==282096) {delay=50; return delay; }
 
   return delay;
 }
@@ -473,7 +491,7 @@ void clusters(bool saveAll, std::string save_dir, const char* format, TChain* fi
     PBClusterCharge.push_back((TH1F*)(h=new TH1F(Form("PBClusterCharge_%d", detids[imod]),  Form("Clusters Charge Distribution in  %s;Cluster charge [ke];Yield", name(detids[imod]).c_str()), 150,0,150))); vh.push_back(h);
     PBClusterSize.push_back((TH1F*)(h=new TH1F(Form("PBClusterSize_%d", detids[imod]), Form( "Clusters Size Distribution in %s;Cluster size [pixel];Yield", name(detids[imod]).c_str()), 10,0,10))); vh.push_back(h);
     PBClustersMod.push_back((TH2F*)(h=new TH2F(Form("PBClustersMod_%d", detids[imod]), Form("Clusters in %s;x;y", name(detids[imod]).c_str()),      416,0,416,      160,0,160.0))); vh.push_back(h);
-    PBClustersGlobal.push_back((TH2F*)(h=new TH2F(Form("PBClustersGlobal_%d", detids[imod]), Form("Clusters in %s;x;y", name(detids[imod]).c_str()), 3200,-16,16, 3200,-16,16))); vh.push_back(h);
+    PBClustersGlobal.push_back((TH2F*)(h=new TH2F(Form("PBClustersGlobal_%d", detids[imod]), Form("Clusters in %s;CMS Global X;CMS Global Y", name(detids[imod]).c_str()), 3200,-16,16, 3200,-16,16))); vh.push_back(h);
 
     //PBClusterChargeVsLS.push_back((TProfile*)(h=new TProfile(Form("PBClusterChargeVsLS_%d", detids[imod]),  Form("Avg cluster charge vs LumiSection in %s;LumiSection;Avg cluster charge", name(detids[imod]).c_str()), 5900, 0, 5900, 0, 150))); vh.push_back(h);
     //PBClusterSizeVsLS.push_back((TProfile*)(h=new TProfile(Form("PBClusterSizeVsLS_%d", detids[imod]),  Form("Avg cluster size vs LumiSection in %s;LumiSection;Avg cluster size", name(detids[imod]).c_str()), 5900, 0, 5900, 0, 15))); vh.push_back(h);
@@ -731,7 +749,7 @@ void rechits(bool saveAll, std::string save_dir, const char* format, TChain* fil
     std::vector<TH1*> vh;
     TH1 *h;
 
-    PBHitsGlobal.push_back((TH2F*)(h=new TH2F(Form("PBHitsGlobal_%d", detids[imod]), Form("RecHits in %s;x;y", name(detids[imod]).c_str()), 3200,-16,16, 3200,-16,16))); vh.push_back(h);
+    PBHitsGlobal.push_back((TH2F*)(h=new TH2F(Form("PBHitsGlobal_%d", detids[imod]), Form("RecHits in %s;CMS Global X;CMS Global Y", name(detids[imod]).c_str()), 3200,-16,16, 3200,-16,16))); vh.push_back(h);
     PBHitCluDx.push_back((TH1F*)(h=new TH1F(Form("PBHitCluDx_%d", detids[imod]),  Form("Rechit to nearest cluster distance in %s;dx [cm];Yield", name(detids[imod]).c_str()), 400,-2,2))); vh.push_back(h);
     PBHitCluDy.push_back((TH1F*)(h=new TH1F(Form("PBHitCluDy_%d", detids[imod]),  Form("Rechit to nearest cluster distance in %s;dy [cm];Yield", name(detids[imod]).c_str()), 1000,-7,3))); vh.push_back(h);
     
@@ -792,11 +810,10 @@ void rechits(bool saveAll, std::string save_dir, const char* format, TChain* fil
       
       std::map<int,int>::const_iterator it_idx=idx.find(rawid);
       if (it_idx==idx.end()) continue;
-      if (traj.onEdge==1&&traj.type!=102) continue;
+      if (traj.type!=102) continue;
       int imod = it_idx->second;
 
       // Correction to cluster positions  344132868, 344134148, 344131076, 344132100, 344130820
-	  //if (traj.type==102) continue;
       float dx_cl = traj.dx_cl;
       float dy_cl = traj.dy_cl;
 
@@ -922,9 +939,10 @@ void plotScript() {
   const char* format = ".png";
 
   TChain* filechain = new TChain("filechain");
-  filechain->Add("/data/vami/projects/pilotBlade/pp2016ReProcessing_v3/CMSSW_8_0_8/src/crab/Ntuple/August_Runs279853-279865/NoFiducialNoAlignment/crab_PilotBlade_data_Ntuplizer_pp_August_Runs279853-279865_v1/results/*.root");
+  filechain->Add("/data/vami/projects/0RootFiles/2016G/PB-Ntuples/*.root");
+
 
   //digis(saveAll, save_dir, format, filechain);
-  //clusters(saveAll, save_dir, format, filechain);
-  rechits(saveAll, save_dir, format, filechain);
+  clusters(saveAll, save_dir, format, filechain);
+  //rechits(saveAll, save_dir, format, filechain);
 }

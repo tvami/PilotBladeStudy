@@ -272,6 +272,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
     float dz;
     float eta;
     float phi;
+	int highPurity;
 
     std::string list;
    
@@ -284,8 +285,9 @@ class PilotBladeStudy : public edm::EDAnalyzer
       dz=NOVAL_F;      
       eta=NOVAL_F;
       phi=NOVAL_F;
+	  highPurity=NOVAL_I;
 
-      list="nPixelHit/I:nStripHit/I:pt/F:dxy/F:dz/F:eta/F:phi/F";
+      list="nPixelHit/I:nStripHit/I:pt/F:dxy/F:dz/F:eta/F:phi/F:highPurity/I";
     }
   };
 
@@ -349,8 +351,8 @@ class PilotBladeStudy : public edm::EDAnalyzer
       list="x/F:y/F:lx/F:ly/F:glx/F:gly/F:glz/F:size/I:charge/F:nclu_mod/I";
     }
 
-    int getROCx() { return (x>=0 && x<160) ? int(x)/80-1+(int(x)/80) : -9999;  }
-    int getROCy() { return (y>=0 && y<416) ? int(y)/52-4+(int(y)/208) : -9999; } 
+    int getROCx() { return (x>=0 && x<160) ? int(x/80)-1+(int(x/80)) : -9999;  }
+    int getROCy() { return (y>=0 && y<416) ? int(y/52)-4+(int(y/208)) : -9999; } 
   };
 // --------------------------- end of ClusterData info ---------------------------- 
   
@@ -518,7 +520,7 @@ class PilotBladeStudy : public edm::EDAnalyzer
     int getROCx() { return (int(lx/0.8164)+int(lx/fabs(lx)));  }
     int getROCy() { return (int(ly/0.81)+int(ly/fabs(ly)));    }
     bool isWithinROCFiducial(float margX, float margY) { 
-      return (fabs(fabs(fmod(fabs(ly),0.8164)-0.4082)-0.4082)>margX && fabs(fabs(fmod(fabs(ly),0.81)-0.405)-0.405)>margY);
+      return (fabs(fabs(fmod(fabs(lx),0.8164)-0.4082)-0.4082)>margX && fabs(fabs(fmod(fabs(ly),0.81)-0.405)-0.405)>margY);
     }
   };
 // -------------------------- end of TrajectoryData info ------------------------------  
