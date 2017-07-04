@@ -267,7 +267,7 @@ void PilotBladeStudy::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   
   // --------------------- Analyze trajectories --------------------
   analyzeTrajs(iEvent, iSetup, trajTrackCollToken_, federrors, 0, cosmicsCase_); 
-  std::cout << "Number of PB Hits: " << nPBHit << " out of " 
+  std::cout << "Number of Hits: "
   	    << nPixelHit << " Pixel hit and " << nStripHit
   	    << " Strip hit in the events so far. " << std::endl;
   
@@ -562,7 +562,7 @@ void PilotBladeStudy::analyzeDigis(const edm::Event& iEvent,
   iEvent.getByToken(digiColl, digiCollectionHandle);
   
   if (!digiCollectionHandle.isValid()) {
-    std::cout<< "The digiCollectionHandle is invalid" << std::endl;
+    if (verbosity>1) std::cout<< "The digiCollectionHandle is invalid" << std::endl;
   } else {
     const edm::DetSetVector<PixelDigi>& digiCollection = *digiCollectionHandle;
     edm::DetSetVector<PixelDigi>::const_iterator itDigiSet =  digiCollection.begin();
@@ -725,7 +725,7 @@ void PilotBladeStudy::analyzeTracks(const edm::Event& iEvent,
   iEvent.getByToken(trackColl, trajTrackCollectionHandle);
   
   if (!trajTrackCollectionHandle.isValid()) {
-    std::cout << "trajTrackCollectionHandle is not valid, exiting the loop" << std::endl;
+    if (verbosity>1) std::cout << "trajTrackCollectionHandle is not valid, exiting the loop" << std::endl;
   } else {
     if (DEBUGTracks) std::cout << " Run " << evt_.run << " Event " << evt_.evt;
     if (DEBUGTracks) std::cout << " Number of tracks = " << trajTrackCollectionHandle->size() << std::endl;
@@ -784,7 +784,7 @@ void PilotBladeStudy::analyzeTrajs(const edm::Event& iEvent,
   iEvent.getByToken(trackColl, trajTrackCollectionHandle);
   
   if (!trajTrackCollectionHandle.isValid()) {
-    std::cout << "trajTrackCollectionHandle is not valid, exiting the loop" << std::endl;
+    if (verbosity>1) std::cout << "trajTrackCollectionHandle is not valid, exiting the loop" << std::endl;
   } else if ((trajTrackCollectionHandle->size())!=0){
     if (DEBUGTrajs) std::cout << "Number of tracks = " << trajTrackCollectionHandle->size() << std::endl;
 
