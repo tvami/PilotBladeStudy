@@ -581,10 +581,10 @@ void PilotBladeStudy::analyzeDigis(const edm::Event& iEvent,
         continue;
       }
       // Take only the FPIX- pixel digis
-      if ((subDetId!=PixelSubdetector::PixelEndcap || module_on.disk>0) && cosmicsCase==false) {
-	if (verbosity>1) std::cout << "Not a FPIX -Z digi -- skipping it" << std::endl;
-        continue;
-      }
+      //if ((subDetId!=PixelSubdetector::PixelEndcap || module_on.disk>0) && cosmicsCase==false) {
+      //  if (verbosity>1) std::cout << "Not a FPIX -Z digi -- skipping it" << std::endl;
+      //continue;
+      //}
       
       if (module_on.disk==-3 && (verbosity)) std::cout << "Pilot Blade digi: " << std::endl;
       edm::DetSet<PixelDigi>::const_iterator itDigi=itDigiSet->begin();
